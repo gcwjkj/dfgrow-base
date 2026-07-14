@@ -1,0 +1,363 @@
+---
+/**
+ * 博客文章详情组件（通用）
+ *
+ * 渲染文章头部元信息 + 内容区 + TOC + 相关文章 + 上下篇导航。
+ * 品牌特有内容（作者信息、服务推荐等）通过 <slot> 注入。
+ *
+ * Props:
+ *   title: string
+ *   description: string
+ *   pubDate: Date | string
+ *   updatedDate?: Date | string
+ *   tags?: string[]
+ *   cover?: string
+ *   coverAlt?: string
+ *   readingTime?: number — 阅读时间（分钟）
+ *   content: any — Astro Content（通过 render() 获取）
+ *   relatedPosts?: Array<{ id, slug, data, overlap? }>
+ *   prevPost?: { id, slug, data } | null
+ *   nextPost?: { id, slug, data } | null
+ *   basePath?: string — 文章链接基础路径（默认 /blog）
+ *   formatDate?: (d: Date) => string
+ *   showToc?: boolean — 是否显示目录（默认 true，h2/h3 >= 2 个时显示）
+ */
+
+interface PostRef {
+  id?: string;
+  slug?: string;
+  data: { title: string; description: string; pubDate: Date | string; cover?: string; coverAlt?: string; tags?: string[] };
+  overlap?: number;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date | string;
+  updatedDate?: Date | string;
+  tags?: string[];
+  cover?: string;
+  coverAlt?: string;
+  readingTime?: number;
+  content: any;
+  relatedPosts?: PostRef[];
+  prevPost?: PostRef | null;
+  nextPost?: PostRef | null;
+  basePath?: string;
+  formatDate?: (d: Date) => string;
+  showToc?: boolean;
+}
+
+const {
+  title, description, pubDate, updatedDate,
+  tags = [], cover, coverAlt, readingTime,
+  content: Content,
+  relatedPosts = [],
+  prevPost, nextPost,
+  basePath = '/blog',
+  showToc = true,
+} = Astro.props;
+
+const defaultFormatDate = Astro.props.formatDate ?? ((d: Date) =>
+  d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+);
+
+function toDate(d: Date | string): Date {
+  return typeof d === 'string' ? new Date(d) : d;
+}
+function getSlug(p: PostRef): string {
+  return p.id ?? p.slug ?? '';
+}
+---
+
+<article class="df-article">
+  <!-- 文章头部 -->
+  <header class="df-article__header">
+    <h1 class="df-article__title">{title}</h1>
+    <p class="df-article__desc">{description}</p>
+    {tags.length > 0 && (
+      <div class="df-article__tags">
+        {tags.map((tag) => (
+          <span class="df-article__tag">#{tag}</span>
+        ))}
+      </div>
+    )}
+    <div class="df-article__meta">
+      <time datetime={toDate(pubDate).toISOString()}>{defaultFormatDate(toDate(pubDate))}</time>
+      {updatedDate && (
+        <span>· 更新于 {defaultFormatDate(toDate(updatedDate))}</span>
+      )}
+      {readingTime != null && <span>· 约 {readingTime} 分钟阅读</span>}
+    </div>
+    {cover && (
+      <div class="df-article__cover">
+        <img
+          src={cover}
+          alt={coverAlt || title}
+          loading="eager"
+          decoding="async"
+        />
+      </div>
+    )}
+  </header>
+
+  <!-- 内容区 + TOC -->
+  <div class="df-article__layout">
+    {showToc && (
+      <aside class="df-article__sidebar" id="df-toc-sidebar">
+        <nav aria-label="文章目录" id="df-toc">
+          <div class="df-toc__title">目录</div>
+          <ul id="df-toc-list" class="df-toc__list"></ul>
+        </nav>
+      </aside>
+    )}
+
+    <div class="df-article__main">
+      <div class="df-article__content prose-cn" id="df-article-body">
+        <Content />
+      </div>
+
+      <!-- 品牌自定义内容插槽（作者信息、服务推荐等） -->
+      <slot name="after-content" />
+
+      <!-- 相关文章 -->
+      {relatedPosts.length > 0 && (
+        <div class="df-article__related">
+          <h2 class="df-article__section-title">
+            <span class="df-article__section-bar"></span>
+            相关文章
+          </h2>
+          <div class="df-article__related-grid">
+            {relatedPosts.map((rp) => (
+              <a
+                href={`${basePath}/${getSlug(rp)}`}
+                class="df-article__related-card"
+              >
+                {rp.data.cover && (
+                  <div class="df-article__related-cover">
+                    <img src={rp.data.cover} alt={rp.data.coverAlt || rp.data.title} loading="lazy" />
+                  </div>
+                )}
+                <div class="df-article__related-body">
+                  {rp.overlap != null && rp.overlap > 1 && (
+                    <span class="df-article__related-badge">高度相关</span>
+                  )}
+                  <time class="df-article__related-date">{defaultFormatDate(toDate(rp.data.pubDate))}</time>
+                  <h3>{rp.data.title}</h3>
+                  <p>{rp.data.description}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- 上下篇 -->
+      {(prevPost || nextPost) && (
+        <div class="df-article__nav">
+          <div class="df-article__nav-grid">
+            {prevPost ? (
+              <a href={`${basePath}/${getSlug(prevPost)}`} class="df-article__nav-card">
+                <span class="df-article__nav-label">← 上一篇</span>
+                <h3>{prevPost.data.title}</h3>
+              </a>
+            ) : <div></div>}
+            {nextPost ? (
+              <a href={`${basePath}/${getSlug(nextPost)}`} class="df-article__nav-card df-article__nav-card--right">
+                <span class="df-article__nav-label">下一篇 →</span>
+                <h3>{nextPost.data.title}</h3>
+              </a>
+            ) : <div></div>}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</article>
+
+<style is:inline>
+  .df-article { max-width: 48rem; margin: 0 auto; }
+  .df-article__header { margin-bottom: 2rem; }
+  .df-article__title {
+    font-size: 1.75rem; font-weight: 700; line-height: 1.3;
+    color: var(--color-ink-900, #111); margin: 0 0 0.75rem;
+  }
+  @media (min-width: 768px) { .df-article__title { font-size: 2.25rem; } }
+  .df-article__desc {
+    font-size: 1rem; color: var(--color-ink-600, #4b5563);
+    line-height: 1.7; margin: 0 0 0.75rem;
+  }
+  .df-article__tags { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.5rem; }
+  .df-article__tag {
+    font-size: 0.75rem; padding: 0.25rem 0.625rem;
+    background: var(--color-ink-100, #f3f4f6);
+    color: var(--color-ink-600, #4b5563);
+    border-radius: 9999px;
+  }
+  .df-article__meta {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    font-size: 0.8125rem; color: var(--color-ink-500, #6b7280);
+  }
+  .df-article__cover {
+    margin-top: 1rem; border-radius: var(--radius-card, 12px); overflow: hidden;
+  }
+  .df-article__cover img {
+    width: 100%; aspect-ratio: 21/9; object-fit: cover; display: block;
+  }
+
+  .df-article__layout {
+    display: grid; grid-template-columns: 1fr; gap: 2rem;
+  }
+  @media (min-width: 1024px) {
+    .df-article__layout { grid-template-columns: 12rem 1fr; }
+  }
+
+  .df-article__sidebar { display: none; }
+  @media (min-width: 1024px) {
+    .df-article__sidebar {
+      display: block; position: sticky; top: 6rem; align-self: start;
+    }
+  }
+  .df-toc__title {
+    font-size: 0.875rem; font-weight: 600;
+    color: var(--color-ink-900, #111); margin-bottom: 0.75rem;
+  }
+  .df-toc__list {
+    list-style: none; padding: 0; margin: 0;
+    border-left: 2px solid var(--color-ink-100, #f3f4f6);
+    padding-left: 0.75rem;
+    display: flex; flex-direction: column; gap: 0.375rem;
+  }
+  .df-toc__list a {
+    font-size: 0.8125rem; color: var(--color-ink-500, #6b7280);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .df-toc__list a:hover { color: var(--color-brand-700, #1a3ab8); }
+
+  .df-article__main { min-width: 0; }
+  .df-article__content { margin-bottom: 3rem; }
+
+  .df-article__section-title {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 1.125rem; font-weight: 700;
+    color: var(--color-ink-900, #111); margin: 0 0 1.25rem;
+  }
+  .df-article__section-bar {
+    width: 0.25rem; height: 1.25rem;
+    background: var(--color-brand-500, #1f44d6);
+    border-radius: 9999px;
+  }
+
+  .df-article__related { padding-top: 2rem; border-top: 1px solid var(--color-ink-100, #f3f4f6); margin-top: 2rem; }
+  .df-article__related-grid {
+    display: grid; grid-template-columns: 1fr; gap: 1rem;
+  }
+  @media (min-width: 640px) {
+    .df-article__related-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .df-article__related-card {
+    border-radius: var(--radius-card, 12px);
+    border: 1px solid var(--color-ink-200, #e5e7eb);
+    overflow: hidden; text-decoration: none; color: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .df-article__related-card:hover {
+    border-color: var(--color-brand-300, #93b4f5);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--color-brand-600, #1f44d6) 5%, transparent);
+  }
+  .df-article__related-cover {
+    aspect-ratio: 21/9; overflow: hidden;
+    background: var(--color-ink-100, #f3f4f6);
+  }
+  .df-article__related-cover img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .df-article__related-card:hover .df-article__related-cover img { transform: scale(1.05); }
+  .df-article__related-body { padding: 1rem; }
+  .df-article__related-badge {
+    display: inline-block; font-size: 0.6875rem; font-weight: 600;
+    padding: 0.125rem 0.375rem; border-radius: 0.25rem;
+    background: var(--color-brand-50, #eef2ff);
+    color: var(--color-brand-700, #1a3ab8);
+    margin-bottom: 0.25rem;
+  }
+  .df-article__related-date {
+    display: block; font-size: 0.75rem;
+    color: var(--color-ink-500, #6b7280); margin-bottom: 0.25rem;
+  }
+  .df-article__related-body h3 {
+    font-size: 0.875rem; font-weight: 600;
+    color: var(--color-ink-900, #111); margin: 0 0 0.375rem;
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .df-article__related-card:hover .df-article__related-body h3 {
+    color: var(--color-brand-700, #1a3ab8);
+  }
+  .df-article__related-body p {
+    font-size: 0.75rem; color: var(--color-ink-500, #6b7280);
+    line-height: 1.5; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .df-article__nav { padding-top: 2rem; border-top: 1px solid var(--color-ink-100, #f3f4f6); margin-top: 2rem; }
+  .df-article__nav-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  }
+  @media (max-width: 639px) {
+    .df-article__nav-grid { grid-template-columns: 1fr; }
+  }
+  .df-article__nav-card {
+    border-radius: var(--radius-card, 12px);
+    border: 1px solid var(--color-ink-200, #e5e7eb);
+    padding: 1rem; text-decoration: none; color: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .df-article__nav-card:hover {
+    border-color: var(--color-brand-300, #93b4f5);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--color-brand-600, #1f44d6) 5%, transparent);
+  }
+  .df-article__nav-card--right { text-align: right; }
+  .df-article__nav-label {
+    font-size: 0.75rem; color: var(--color-ink-500, #6b7280);
+    display: block; margin-bottom: 0.375rem;
+  }
+  .df-article__nav-card h3 {
+    font-size: 0.875rem; font-weight: 600;
+    color: var(--color-ink-900, #111); margin: 0;
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .df-article__nav-card:hover h3 { color: var(--color-brand-700, #1a3ab8); }
+</style>
+
+<script is:inline>
+  // 动态生成 TOC
+  (function() {
+    var body = document.getElementById('df-article-body');
+    var tocList = document.getElementById('df-toc-list');
+    if (!body || !tocList) return;
+    var headings = body.querySelectorAll('h2, h3');
+    if (headings.length < 2) {
+      var toc = document.getElementById('df-toc');
+      if (toc) toc.remove();
+      return;
+    }
+    headings.forEach(function(h) {
+      if (!h.id) {
+        h.id = h.textContent.trim().replace(/\s+/g, '-').toLowerCase();
+      }
+      var li = document.createElement('li');
+      li.style.paddingLeft = h.tagName === 'H3' ? '0.75rem' : '0';
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      tocList.appendChild(li);
+    });
+  })();
+</script>

@@ -1,0 +1,340 @@
+---
+import { siteConfig, navConfig, i18nConfig, seoConfig } from 'virtual:dfgrow/config';
+
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const mobileCta = navConfig.mobileCta ?? navConfig.cta;
+---
+
+<header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-ink-100">
+  <div class="container-page flex items-center justify-between h-16">
+    <a href="/" class="flex items-center gap-2 no-underline">
+      <img src={seoConfig.logoPath ?? '/favicon.ico'} alt="logo" style={{ height: seoConfig.logoHeight + 'px' || '24px' }} class="rounded-md" loading="eager" fetchpriority="high" />
+      {seoConfig.showSiteName && <span class="font-semibold text-ink-900 text-lg">{siteConfig.name}</span>}
+    </a>
+
+    <nav class="hidden md:flex items-center gap-1" aria-label={i18nConfig.mainNav}>
+      {navConfig.main.map((item) => {
+        const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+        const hasChildren = item.children && item.children.length > 0;
+        const isGrid = item.dropdownLayout === 'grid';
+        return (
+          <div class:list={['relative group', hasChildren && 'nav-dropdown']}>
+            <a
+              href={hasChildren ? '#' : item.href}
+              class:list={[
+                'px-3 py-2 text-sm no-underline rounded-md transition-colors inline-flex items-center gap-1',
+                isActive
+                  ? 'text-brand-700 bg-brand-50'
+                  : 'text-ink-700 hover:text-brand-700 hover:bg-ink-50',
+              ]}
+              onClick={hasChildren ? 'event.preventDefault()' : undefined}
+            >
+              {item.label}
+              {hasChildren && (
+                <svg class="w-3.5 h-3.5 text-ink-400 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </a>
+            {hasChildren && isGrid && (
+              /* ────── Grid 双列卡片布局 ────── */
+              <div class="absolute left-1/2 -translate-x-1/2 top-full pt-2 hidden group-hover:block z-50">
+                <div class="bg-white rounded-xl shadow-xl border border-ink-100 w-[540px] overflow-hidden">
+                  {/* 引导链接区 */}
+                  {item.dropdownHeader && (
+                    <a
+                      href={item.dropdownHeader.href}
+                      class="flex items-center gap-2 px-5 py-3 border-b border-ink-100 no-underline hover:bg-ink-50/60 transition-colors"
+                    >
+                      <svg class="w-4 h-4 text-brand-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                      <span class="text-sm text-brand-600 font-medium">{item.dropdownHeader.label}</span>
+                    </a>
+                  )}
+
+                  {/* 双列卡片网格 */}
+                  <div class="grid grid-cols-2 gap-0 p-2">
+                    {item.children!.map((child) => {
+                      const isChildActive = pathname === child.href;
+                      return (
+                        <a
+                          href={child.href}
+                          class:list={[
+                            'flex items-center justify-between px-4 py-3 mx-1 my-1 rounded-lg no-underline transition-all group/card',
+                            isChildActive
+                              ? 'bg-brand-50 text-brand-700'
+                              : 'text-ink-700 hover:bg-ink-50 hover:shadow-sm',
+                          ]}
+                        >
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                              <span class="text-sm font-medium">{child.label}</span>
+                              {child.badge && (
+                                <span class:list={[
+                                  'text-[10px] px-1.5 py-0.5 rounded font-bold leading-none',
+                                  child.badgeStyle === 'hot'
+                                    ? 'bg-red-500 text-white'
+                                    : child.badgeStyle === 'new'
+                                      ? 'bg-green-500 text-white'
+                                      : 'bg-ink-100 text-ink-600',
+                                ]}>
+                                  {child.badge}
+                                </span>
+                              )}
+                            </div>
+                            {child.description && (
+                              <div class="text-xs text-ink-500 mt-1 leading-relaxed">{child.description}</div>
+                            )}
+                          </div>
+                          <svg class="w-4 h-4 text-ink-300 group-hover/card:text-brand-500 group-hover/card:translate-x-0.5 shrink-0 ml-2 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </a>
+                      );
+                    })}
+                  </div>
+
+                  {/* 底部资源区 */}
+                  {item.dropdownFooter && (
+                    <div class="border-t border-ink-100 px-5 py-3 bg-ink-50/40">
+                      <div class="text-[10px] text-ink-400 font-semibold uppercase tracking-wider mb-2">
+                        {item.dropdownFooter.title}
+                      </div>
+                      <div class="flex items-center gap-4">
+                        {item.dropdownFooter.items.map((fi) => (
+                          <a
+                            href={fi.href}
+                            class="flex items-center gap-1.5 text-sm text-ink-600 hover:text-brand-600 no-underline transition-colors"
+                          >
+                            <svg class="w-3.5 h-3.5 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>{fi.label}</span>
+                            {fi.description && (
+                              <span class="text-xs text-ink-400">{fi.description}</span>
+                            )}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {hasChildren && !isGrid && (
+              /* ────── Single 单列列表布局（默认） ────── */
+              <div class="absolute left-0 top-full pt-1 hidden group-hover:block z-50">
+                <div class:list={[
+                  'bg-white rounded-lg shadow-lg border border-ink-100 min-w-[200px]',
+                  item.dropdownFooter ? 'w-[280px]' : '',
+                ]}>
+                  {item.dropdownHeader && (
+                    <a
+                      href={item.dropdownHeader.href}
+                      class="block px-4 py-3 border-b border-ink-100 no-underline hover:bg-ink-50 transition-colors"
+                    >
+                      <div class="text-xs text-brand-600 font-medium">{item.dropdownHeader.label}</div>
+                      {item.dropdownHeader.description && (
+                        <div class="text-xs text-ink-500 mt-0.5">{item.dropdownHeader.description}</div>
+                      )}
+                    </a>
+                  )}
+                  <div class="py-2">
+                    {item.children!.map((child) => {
+                      const isChildActive = pathname === child.href;
+                      const hasDescription = Boolean(child.description);
+                      return (
+                        <>
+                          {child.separatorBefore && (
+                            <div class="my-1.5 mx-3 border-t border-ink-100" />
+                          )}
+                          <a
+                            href={child.href}
+                            class:list={[
+                              'block px-4 no-underline transition-colors',
+                              hasDescription ? 'py-2.5' : 'py-2',
+                              isChildActive
+                                ? 'text-brand-700 bg-brand-50'
+                                : 'text-ink-700 hover:text-brand-700 hover:bg-ink-50',
+                            ]}
+                          >
+                            <div class="flex items-center gap-2">
+                              <span class:list={['text-sm', hasDescription && 'font-medium']}>{child.label}</span>
+                              {child.badge && (
+                                <span class:list={[
+                                  'text-[10px] px-1.5 py-0.5 rounded font-bold leading-none',
+                                  child.badgeStyle === 'hot'
+                                    ? 'bg-red-500 text-white'
+                                    : child.badgeStyle === 'new'
+                                      ? 'bg-green-500 text-white'
+                                      : 'bg-ink-100 text-ink-600',
+                                ]}>
+                                  {child.badge}
+                                </span>
+                              )}
+                            </div>
+                            {child.description && (
+                              <div class="text-xs text-ink-500 mt-0.5 leading-relaxed">{child.description}</div>
+                            )}
+                          </a>
+                        </>
+                      );
+                    })}
+                  </div>
+                  {item.dropdownFooter && (
+                    <div class="border-t border-ink-100 px-4 py-3 bg-ink-50/50 rounded-b-lg">
+                      <div class="text-[10px] text-ink-500 font-semibold uppercase tracking-wider mb-2">
+                        {item.dropdownFooter.title}
+                      </div>
+                      {item.dropdownFooter.items.map((fi) => (
+                        <a
+                          href={fi.href}
+                          class="block py-1.5 text-sm text-ink-600 hover:text-brand-600 no-underline"
+                        >
+                          {fi.label}
+                          {fi.description && (
+                            <span class="text-xs text-ink-400 ml-1">{fi.description}</span>
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+
+    <div class="flex items-center gap-3">
+      <a
+        href={navConfig.cta.href}
+        class="hidden md:inline-flex items-center px-4 py-2 rounded-md bg-brand-600 text-white text-sm font-medium no-underline hover:bg-brand-700 transition-colors"
+        data-track="cta_click"
+        data-track-location="header"
+      >
+        {navConfig.cta.label}
+      </a>
+      <button
+        id="mobile-menu-toggle"
+        class="md:hidden p-2 text-ink-700"
+        aria-label={i18nConfig.toggleMenu}
+        aria-expanded="false"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="mobile-menu" class="hidden md:hidden border-t border-ink-100 bg-white">
+    <nav class="container-page py-4 flex flex-col gap-1" aria-label={i18nConfig.mobileNav}>
+      {navConfig.main.map((item) => {
+        const hasChildren = item.children && item.children.length > 0;
+        return (
+          <>
+            {hasChildren && (
+              <div class="px-3 pt-2 pb-1 text-xs text-ink-500 font-semibold uppercase tracking-wider">
+                {item.label}
+              </div>
+            )}
+            {!hasChildren && (
+              <a
+                href={item.href}
+                class="px-3 py-3 text-base text-ink-800 no-underline rounded-md hover:bg-ink-50"
+              >
+                {item.label}
+              </a>
+            )}
+
+            {hasChildren && item.dropdownHeader && (
+              <a
+                href={item.dropdownHeader.href}
+                class="mx-3 mb-1 px-3 py-2 text-xs text-brand-600 font-medium no-underline rounded-md bg-brand-50 hover:bg-brand-100"
+              >
+                {item.dropdownHeader.label}
+              </a>
+            )}
+
+            {hasChildren && item.children!.map((child) => (
+              <>
+                {child.separatorBefore && (
+                  <div class="my-1.5 mx-3 border-t border-ink-100" />
+                )}
+                <a
+                  href={child.href}
+                  class="px-3 py-2.5 text-sm text-ink-600 no-underline rounded-md hover:bg-ink-50 flex items-center gap-2"
+                  style="padding-left: 2rem;"
+                >
+                  <span>{child.label}</span>
+                  {child.badge && (
+                    <span class:list={[
+                      'text-[10px] px-1.5 py-0.5 rounded font-bold leading-none',
+                      child.badgeStyle === 'hot'
+                        ? 'bg-red-500 text-white'
+                        : child.badgeStyle === 'new'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-ink-100 text-ink-600',
+                    ]}>
+                      {child.badge}
+                    </span>
+                  )}
+                </a>
+              </>
+            ))}
+          </>
+        );
+      })}
+      <a
+        href={mobileCta.href}
+        class="mt-2 px-3 py-3 text-base text-white bg-brand-600 rounded-md text-center no-underline"
+      >
+        {mobileCta.label}
+      </a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+
+  function closeMenu() {
+    menu?.classList.add('hidden');
+    toggle?.setAttribute('aria-expanded', 'false');
+  }
+
+  function openMenu() {
+    menu?.classList.remove('hidden');
+    toggle?.setAttribute('aria-expanded', 'true');
+  }
+
+  toggle?.addEventListener('click', () => {
+    if (menu?.classList.contains('hidden')) {
+      openMenu();
+    } else {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menu && !menu.classList.contains('hidden')) {
+      closeMenu();
+      toggle?.focus();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (menu && !menu.classList.contains('hidden')) {
+      const target = e.target as HTMLElement;
+      if (!menu.contains(target) && !toggle?.contains(target)) {
+        closeMenu();
+      }
+    }
+  });
+</script>

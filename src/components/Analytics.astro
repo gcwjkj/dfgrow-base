@@ -1,0 +1,98 @@
+---
+const ga4Id = import.meta.env.PUBLIC_GA4_ID;
+const clarityId = import.meta.env.PUBLIC_CLARITY_ID;
+const baiduId = import.meta.env.PUBLIC_BAIDU_TONGJI_ID;
+const isProd = import.meta.env.PROD;
+---
+
+<!-- 空值在 define:vars 中必须用 null，不能是 undefined -->
+<script is:inline define:vars={{ ga4Id: ga4Id || null, clarityId: clarityId || null, baiduId: baiduId || null, isProd }}>
+  var _isProd = isProd;
+  var _ga4 = ga4Id;
+  var _clarity = clarityId;
+  var _baidu = baiduId;
+
+  // requestIdleCallback 延迟加载分析脚本，不阻塞首屏
+  function loadAnalytics() {
+    if (!_isProd) return;
+
+    // GA4
+    if (_ga4) {
+      var gs = document.createElement('script');
+      gs.async = true;
+      gs.src = 'https://www.googletagmanager.com/gtag/js?id=' + _ga4;
+      document.head.appendChild(gs);
+    }
+
+    // Microsoft Clarity
+    if (_clarity) {
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", _clarity);
+    }
+
+    // 百度统计
+    if (_baidu) {
+      var _hmt = _hmt || [];
+      window._hmt = _hmt;
+      (function() {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?" + _baidu;
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+      })();
+    }
+  }
+
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadAnalytics, { timeout: 4000 });
+  } else {
+    setTimeout(loadAnalytics, 100);
+  }
+</script>
+
+{isProd && ga4Id && (
+  <script is:inline define:vars={{ ga4Id }}>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', ga4Id, { anonymize_ip: true });
+  </script>
+)}
+
+<script is:inline>
+  // 简易事件追踪 helper：window.track('event_name', { ...params })
+  window.track = function(eventName, params) {
+    try {
+      if (window.gtag) {
+        window.gtag('event', eventName, params || {});
+      }
+      if (window._hmt) {
+        window._hmt.push(['_trackEvent', 'custom', eventName, JSON.stringify(params || {})]);
+      }
+    } catch (e) {
+      // swallow
+    }
+  };
+
+  // 统一 CTA 点击追踪 — 监听所有 [data-track] 元素
+  document.addEventListener('click', function(e) {
+    var target = e.target;
+    // 向上查找最近的 [data-track] 元素
+    while (target && target !== document) {
+      if (target.hasAttribute && target.hasAttribute('data-track')) {
+        if (target.dataset.trackBound) return;
+        target.dataset.trackBound = 'true';
+        window.track(target.getAttribute('data-track'), {
+          location: target.getAttribute('data-track-location') || '',
+          href: target.href || '',
+        });
+        return;
+      }
+      target = target.parentElement;
+    }
+  }, true);
+</script>

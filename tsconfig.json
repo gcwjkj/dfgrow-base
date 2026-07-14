@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "strictNullChecks": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@gcwjkj/dfgrow-base/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "index.ts", "env.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

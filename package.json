@@ -1,0 +1,60 @@
+{
+  "name": "@gcwjkj/dfgrow-base",
+  "version": "0.7.0",
+  "description": "Dengfeng Growth — reusable Astro SEO/GEO/performance infrastructure for client websites",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./integration": "./src/integration.ts",
+    "./types": "./src/types.ts",
+    "./components/*": "./src/components/*",
+    "./layouts/*": "./src/layouts/*",
+    "./lib/*": "./src/lib/*",
+    "./lib/generate-brand-scale": "./src/lib/generate-brand-scale.mjs",
+    "./styles/tokens.css": "./src/styles/tokens.css",
+    "./styles/base.css": "./src/styles/base.css",
+    "./styles/prose.css": "./src/styles/prose.css"
+  },
+  "bin": {
+    "dfgrow-push-sitemap": "./bin/push-sitemap.mjs",
+    "dfgrow-convert-webp": "./bin/convert-webp.mjs",
+    "dfgrow-update-brand-color": "./bin/update-brand-color.mjs"
+  },
+  "files": [
+    "src/",
+    "bin/",
+    "index.ts",
+    "env.d.ts",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@astrojs/sitemap": ">=3.0.0",
+    "astro": ">=5.0.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.3.2",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "seo",
+    "geo",
+    "schema-org",
+    "structured-data",
+    "sitemap",
+    "llms-txt"
+  ],
+  "license": "MIT",
+  "author": "曹进国 <hi@gcwjkj.com> (https://dfgrow.com)",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "homepage": "https://dfgrow.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gcwjkj/dfgrow-base.git"
+  }
+}

@@ -1,0 +1,49 @@
+---
+import Section from './Section.astro';
+import Button from './Button.astro';
+import { ctaConfig } from 'virtual:dfgrow/config';
+
+interface Props {
+  title?: string;
+  description?: string;
+  primaryLabel?: string;
+  primaryHref?: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+  note?: string;
+  location?: string;
+}
+
+const {
+  title = ctaConfig.title,
+  description = ctaConfig.description,
+  primaryLabel = ctaConfig.primaryLabel,
+  primaryHref = ctaConfig.primaryHref,
+  secondaryLabel = ctaConfig.secondaryLabel,
+  secondaryHref = ctaConfig.secondaryHref,
+  note = ctaConfig.note,
+  location = 'cta_section',
+} = Astro.props;
+---
+
+<Section bg="brand" padding="md">
+  <div class="text-center max-w-3xl mx-auto">
+    <h2 class="text-h2 text-ink-900">
+      {title}
+    </h2>
+    <p class="mt-2 mb-4 text-base leading-relaxed text-ink-700">{description}</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+      <Button href={primaryHref} size="lg" trackEvent="cta_click" trackLocation={location} data-delight>
+        {primaryLabel}
+      </Button>
+      {secondaryLabel && secondaryHref && (
+        <Button href={secondaryHref} size="lg" variant="secondary" trackEvent="cta_click" trackLocation={`${location}_secondary`}>
+          {secondaryLabel}
+        </Button>
+      )}
+    </div>
+    {note && (
+      <p class="mt-2 text-sm text-ink-500 leading-relaxed">{note}</p>
+    )}
+  </div>
+</Section>

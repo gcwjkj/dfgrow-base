@@ -1,0 +1,38 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  align?: 'left' | 'center';
+  invert?: boolean;
+}
+
+const {
+  eyebrow,
+  title,
+  description,
+  align = 'left',
+  invert = false,
+} = Astro.props;
+
+const alignCls = align === 'center' ? 'text-center mx-auto' : 'text-left';
+const titleColor = invert ? 'text-white' : 'text-ink-900';
+const descColor = invert ? 'text-ink-300' : 'text-ink-600';
+const eyebrowColor = invert ? 'text-accent-300' : 'text-brand-600';
+---
+
+<div class:list={[alignCls]}>
+  {eyebrow && (
+    <div class:list={['text-sm font-semibold uppercase tracking-wider mb-1', eyebrowColor]}>
+      {eyebrow}
+    </div>
+  )}
+  <h2 class:list={['text-xl md:text-2xl font-semibold tracking-tight', titleColor]}>
+    {title}
+  </h2>
+  {description && (
+    <p class:list={['mt-1 text-base leading-relaxed', descColor]}>
+      {description}
+    </p>
+  )}
+</div>

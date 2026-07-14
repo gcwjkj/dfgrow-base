@@ -1,0 +1,142 @@
+---
+/**
+ * DelightEnhancements.astro
+ * 全局趣味体验增强组件
+ * 
+ * 包含：
+ * 1. 按钮微交互增强（hover 缩放 + shimmer 光扫 + active 按压）
+ * 2. Konami 彩蛋（↑↑↓↓←→←→BA → 增长模式）
+ * 
+ * 用法：在任意页面 </BaseLayout> 前引入 <DelightEnhancements />
+ * 样式和脚本均为内联，零额外请求
+ */
+---
+
+<style is:inline>
+  .df-btn-enhance {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+  .df-btn-enhance::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+    transition: left 0.5s ease;
+    pointer-events: none;
+  }
+  .df-btn-enhance:hover {
+    transform: translateY(-1px) scale(1.02);
+  }
+  .df-btn-enhance:hover::before {
+    left: 100%;
+  }
+  .df-btn-enhance:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.08s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .df-btn-enhance:hover { transform: none; }
+    .df-btn-enhance:active { transform: none; }
+    .df-btn-enhance::before { display: none; }
+  }
+
+  .df-growth-mode {
+    animation: df-rainbow-bg 3s ease infinite;
+  }
+  @keyframes df-rainbow-bg {
+    0% { filter: hue-rotate(0deg); }
+    50% { filter: hue-rotate(30deg); }
+    100% { filter: hue-rotate(0deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .df-growth-mode { animation: none; }
+  }
+</style>
+
+<script is:inline>
+  (function() {
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!reduceMotion) {
+      document.querySelectorAll('a[href], button[type], button:not([type])').forEach(function(el) {
+        if (el.classList.contains('df-btn-enhance')) return;
+        if (el.closest('[data-no-enhance]')) return;
+        if (el.hasAttribute('data-delight') || el.closest('[data-delight]')) {
+          el.classList.add('df-btn-enhance');
+        }
+      });
+    }
+
+    var KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    var seq = [];
+    var activated = false;
+
+    document.addEventListener('keydown', function(e) {
+      var key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      seq.push(key);
+      seq = seq.slice(-KONAMI.length);
+
+      if (seq.join(',') === KONAMI.join(',') && !activated) {
+        activated = true;
+        triggerGrowthMode();
+      }
+    });
+
+    function triggerGrowthMode() {
+      if (reduceMotion) return;
+
+      var banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,var(--color-brand-600),var(--color-brand-500),var(--color-brand-400),var(--color-brand-500),var(--color-brand-600));color:#fff;text-align:center;padding:12px 16px;font-size:14px;font-weight:500;box-shadow:0 4px 20px color-mix(in srgb, var(--color-brand-600) 30%, transparent);animation:df-slide-down 0.4s ease';
+      banner.innerHTML = '你发现了增长模式的秘密！ 正在注入增长能量…';
+      document.body.appendChild(banner);
+
+      document.body.classList.add('df-growth-mode');
+
+      var icons = ['SEO', 'AI', 'GEO', '\u2191', '\u2713', '\u2605'];
+      var colors = ['var(--color-brand-600)', 'var(--color-brand-500)', 'var(--color-brand-400)', 'var(--color-brand-300)'];
+      var container = document.createElement('div');
+      container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99998;overflow:hidden';
+      document.body.appendChild(container);
+
+      for (var i = 0; i < 24; i++) {
+        (function(idx) {
+          setTimeout(function() {
+            var el = document.createElement('div');
+            var size = 28 + Math.random() * 16;
+            var left = Math.random() * 100;
+            var dur = 2000 + Math.random() * 1500;
+            var color = colors[Math.floor(Math.random() * colors.length)];
+            var icon = icons[Math.floor(Math.random() * icons.length)];
+            el.textContent = icon;
+            el.style.cssText = 'position:absolute;top:-40px;left:' + left + '%;width:' + size + 'px;height:' + size + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (size * 0.45) + 'px;font-weight:700;color:' + color + ';opacity:0;animation:df-float-up ' + dur + 'ms ease-out forwards';
+            container.appendChild(el);
+            setTimeout(function() { el.remove(); }, dur + 100);
+          }, idx * 120);
+        })(i);
+      }
+
+      var style = document.createElement('style');
+      style.textContent = '@keyframes df-slide-down{from{transform:translateY(-100%)}to{transform:translateY(0)}}@keyframes df-float-up{0%{opacity:0;transform:translateY(0) rotate(0deg)}20%{opacity:0.8}100%{opacity:0;transform:translateY(-' + (window.innerHeight + 60) + 'px) rotate(' + (Math.random() > 0.5 ? 180 : -180) + 'deg)}}';
+      document.head.appendChild(style);
+
+      setTimeout(function() {
+        banner.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(-100%)';
+      }, 3500);
+
+      setTimeout(function() {
+        banner.remove();
+        container.remove();
+        style.remove();
+        document.body.classList.remove('df-growth-mode');
+        activated = false;
+      }, 4500);
+    }
+  })();
+</script>

@@ -1,0 +1,50 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  href?: string;
+  type?: 'button' | 'submit';
+  class?: string;
+  trackEvent?: string;
+  trackLocation?: string;
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  type = 'button',
+  class: className,
+  trackEvent,
+  trackLocation,
+} = Astro.props;
+
+const base = 'inline-flex items-center justify-center font-medium rounded-md transition-colors no-underline whitespace-nowrap';
+const variants = {
+  primary: 'bg-brand-600 text-white hover:bg-brand-700',
+  secondary: 'bg-white text-brand-700 border border-brand-200 hover:bg-brand-50',
+  ghost: 'text-brand-700 hover:bg-brand-50',
+};
+const sizes = {
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-5 py-2.5 text-base',
+  lg: 'px-7 py-3.5 text-lg',
+};
+
+const cls = [base, variants[variant], sizes[size], className].filter(Boolean).join(' ');
+const trackAttrs = trackEvent
+  ? { 'data-track': trackEvent, 'data-track-location': trackLocation ?? '' }
+  : {};
+---
+
+{href ? (
+  <a href={href} class={cls} {...trackAttrs}>
+    <slot />
+  </a>
+) : (
+  <button type={type} class={cls} {...trackAttrs}>
+    <slot />
+  </button>
+)}
+
+{/* CTA 点击追踪统一在 Analytics.astro 中处理 */}

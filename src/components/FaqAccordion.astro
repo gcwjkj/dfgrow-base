@@ -1,0 +1,136 @@
+---
+/**
+ * FAQ 手风琴组件
+ *
+ * Props:
+ *   items: FaqItem[] — FAQ 条目列表
+ *   categoryMeta?: Record<string, FaqCategoryMeta> — 可选分类元信息
+ *   grouped?: boolean — 是否按分类分组展示（默认 false）
+ */
+import type { FaqItem, FaqCategoryMeta } from '../types.ts';
+
+interface Props {
+  items: FaqItem[];
+  categoryMeta?: Record<string, FaqCategoryMeta>;
+  grouped?: boolean;
+}
+
+const { items, categoryMeta, grouped = false } = Astro.props;
+
+const categories = grouped
+  ? [...new Set(items.map((i) => i.category))]
+  : ['__all__'];
+
+function renderFaqItem(item: FaqItem, idx: number) {
+  return `<details class="df-faq-item" id="faq-${idx}">
+    <summary class="df-faq-summary">
+      <span class="df-faq-q">${item.question}</span>
+      <svg class="df-faq-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 8 10 12 14 8"/>
+      </svg>
+    </summary>
+    <div class="df-faq-answer">${item.answer}</div>
+  </details>`;
+}
+---
+
+<div class="df-faq-list" itemscope itemtype="https://schema.org/FAQPage">
+  {categories.map((cat) => {
+    const catItems = cat === '__all__' ? items : items.filter((i) => i.category === cat);
+    const meta = categoryMeta?.[cat];
+    return (
+      <div class="df-faq-group">
+        {meta && (
+          <div class="df-faq-group-header">
+            <h3 class="df-faq-group-title">{meta.title}</h3>
+            {meta.description && <p class="df-faq-group-desc">{meta.description}</p>}
+          </div>
+        )}
+        <div class="df-faq-items">
+          {catItems.map((item, idx) => (
+            <Fragment set:html={renderFaqItem(item, idx)} />
+          ))}
+        </div>
+      </div>
+    );
+  })}
+</div>
+
+<style is:inline>
+  .df-faq-list { display: flex; flex-direction: column; gap: 2rem; }
+  .df-faq-group-header { margin-bottom: 1rem; }
+  .df-faq-group-title { font-size: 1.25rem; font-weight: 600; color: var(--color-ink-900, #111); margin: 0; }
+  .df-faq-group-desc { color: var(--color-ink-500, #666); margin-top: 0.25rem; font-size: 0.9375rem; }
+  .df-faq-items { display: flex; flex-direction: column; gap: 0; }
+  .df-faq-item {
+    border-bottom: 1px solid var(--color-ink-200, #e5e7eb);
+  }
+  .df-faq-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 0;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 500;
+    color: var(--color-ink-900, #111);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .df-faq-summary::-webkit-details-marker { display: none; }
+  .df-faq-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    color: var(--color-ink-400, #9ca3af);
+  }
+  .df-faq-item[open] .df-faq-chevron {
+    transform: rotate(180deg);
+  }
+  .df-faq-answer {
+    padding: 0 0 1rem;
+    color: var(--color-ink-600, #4b5563);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+  }
+  .df-faq-summary:focus-visible {
+    outline: 2px solid var(--color-brand-500, #1f44d6);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+</style>
+
+<!-- Schema.org FAQPage 结构化数据 -->
+<script is:inline>
+  (function() {
+    var list = document.querySelector('.df-faq-list');
+    if (!list) return;
+    var items = list.querySelectorAll('.df-faq-item');
+    if (!items.length) return;
+    var entities = [];
+    items.forEach(function(el) {
+      var q = el.querySelector('.df-faq-q');
+      var a = el.querySelector('.df-faq-answer');
+      if (q && a) {
+        entities.push({
+          '@type': 'Question',
+          name: q.textContent.trim(),
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: a.textContent.trim()
+          }
+        });
+      }
+    });
+    if (entities.length) {
+      var s = document.createElement('script');
+      s.type = 'application/ld+json';
+      s.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: entities
+      });
+      document.head.appendChild(s);
+    }
+  })();
+</script>

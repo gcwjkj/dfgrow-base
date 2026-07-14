@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dfgrow-base Brand Color Picker</title>
+<style>
+  :root {
+    --brand: #25b1da;
+    --brand-50: #e6f6fb;
+    --brand-100: #bfedf7;
+    --brand-200: #a6ddf0;
+    --brand-300: #72cce6;
+    --brand-400: #4ac4e2;
+    --brand-500: #32b8dd;
+    --brand-600: #25b1da;
+    --brand-700: #1a8fb3;
+    --brand-800: #15758f;
+    --brand-900: #0f5c71;
+    --brand-950: #082f3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+
+  /* Top bar */
+  .topbar { background: #111827; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .topbar h1 { font-size: 16px; font-weight: 700; }
+  .topbar h1 span { color: var(--brand); }
+  .topbar .meta { font-size: 12px; color: #888; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 48px); }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  /* Sidebar */
+  .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 24px; overflow-y: auto; }
+  .sidebar h2 { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 16px; }
+  .sidebar h3 { font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 12px; }
+
+  .picker-row { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+  .color-input-wrap { position: relative; width: 56px; height: 56px; border-radius: 12px; overflow: hidden; border: 3px solid #e5e7eb; flex-shrink: 0; }
+  .color-input-wrap input[type="color"] { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); border: none; cursor: pointer; }
+  .hex-input { flex: 1; }
+  .hex-input label { display: block; font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+  .hex-input input { width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 18px; font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 600; color: #111827; text-transform: uppercase; }
+  .hex-input input:focus { outline: none; border-color: var(--brand); }
+
+  /* Presets */
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; }
+  .preset { width: 36px; height: 36px; border-radius: 8px; border: 3px solid transparent; cursor: pointer; position: relative; transition: all 0.15s; }
+  .preset:hover { transform: scale(1.1); }
+  .preset.active { border-color: #111827; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111827; }
+  .preset::after { content: attr(data-name); position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #9ca3af; white-space: nowrap; opacity: 0; transition: opacity 0.15s; }
+  .preset:hover::after { opacity: 1; }
+
+  /* Scale */
+  .scale-bar { display: flex; border-radius: 8px; overflow: hidden; height: 44px; margin-bottom: 4px; }
+  .scale-swatch { flex: 1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+  .scale-swatch span { font-size: 9px; font-weight: 600; }
+  .scale-labels { display: flex; }
+  .scale-labels span { flex: 1; text-align: center; font-size: 9px; color: #9ca3af; }
+
+  /* Export */
+  .export-tabs { display: flex; gap: 0; margin-bottom: 0; }
+  .export-tab { flex: 1; padding: 8px; background: #f3f4f6; border: none; cursor: pointer; font-size: 12px; font-weight: 600; color: #6b7280; transition: all 0.15s; }
+  .export-tab:first-child { border-radius: 8px 0 0 0; }
+  .export-tab:last-child { border-radius: 0 8px 0 0; }
+  .export-tab.active { background: #1f2937; color: #fff; }
+  .export-code { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 0 0 8px 8px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.6; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+  .copy-btn { display: block; width: 100%; padding: 10px; background: var(--brand); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; margin-top: 12px; transition: all 0.15s; }
+  .copy-btn:hover { opacity: 0.9; }
+  .copy-btn.copied { background: #059669; }
+
+  /* Preview */
+  .preview-area { padding: 32px; overflow-y: auto; }
+  .preview-area h2 { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 20px; }
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 1200px) { .preview-grid { grid-template-columns: 1fr; } }
+
+  .pv-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .pv-card-header { padding: 14px 16px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pv-card-body { padding: 20px; }
+
+  /* Preview elements */
+  .pv-nav { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
+  .pv-nav .logo { font-size: 16px; font-weight: 700; }
+  .pv-nav .links { font-size: 11px; color: #6b7280; }
+  .pv-nav .cta { padding: 6px 12px; border-radius: 6px; color: #fff; font-size: 11px; font-weight: 600; }
+
+  .pv-hero { border-radius: 10px; padding: 28px 20px; text-align: center; color: #fff; }
+  .pv-hero h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .pv-hero p { font-size: 12px; opacity: 0.85; margin-bottom: 14px; }
+  .pv-hero-btn { display: inline-block; background: #fff; padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; margin: 0 3px; }
+  .pv-hero-btn-o { display: inline-block; border: 2px solid rgba(255,255,255,0.5); color: #fff; padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; margin: 0 3px; }
+
+  .pv-btns { display: flex; gap: 8px; }
+  .pv-btn-p { padding: 10px 20px; border-radius: 7px; color: #fff; font-size: 12px; font-weight: 600; border: none; }
+  .pv-btn-s { padding: 10px 20px; border-radius: 7px; font-size: 12px; font-weight: 600; background: transparent; border: 2px solid; }
+
+  .pv-trust { display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; }
+  .pv-trust-item { text-align: center; }
+  .pv-trust-item .v { font-size: 15px; font-weight: 700; }
+  .pv-trust-item .l { font-size: 9px; color: #9ca3af; margin-top: 2px; }
+
+  .pv-tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; margin-bottom: 6px; }
+  .pv-product-card h4 { font-size: 14px; color: #111827; margin-bottom: 3px; }
+  .pv-product-card p { font-size: 11px; color: #9ca3af; line-height: 1.5; }
+
+  .pv-series-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pv-series-card { padding: 14px; border-radius: 8px; text-align: center; color: #fff; }
+  .pv-series-card h5 { font-size: 13px; margin-bottom: 3px; }
+  .pv-series-card p { font-size: 10px; opacity: 0.8; }
+
+  .pv-cta-section { border-radius: 10px; padding: 24px 18px; text-align: center; color: #fff; }
+  .pv-cta-section h3 { font-size: 18px; margin-bottom: 6px; font-weight: 700; }
+  .pv-cta-section p { font-size: 12px; opacity: 0.85; margin-bottom: 12px; }
+
+  .pv-footer { padding: 16px; border-radius: 8px; }
+  .pv-footer h4 { color: #fff; font-size: 13px; margin-bottom: 6px; }
+  .pv-footer .cols { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; font-size: 10px; line-height: 1.5; color: #888; }
+  .pv-footer .copy { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 9px; color: #555; }
+
+  .pv-links a { font-size: 12px; text-decoration: none; margin-right: 14px; }
+
+  /* Full-width preview */
+  .full-preview { grid-column: 1 / -1; }
+  .full-hero { border-radius: 12px; padding: 48px 32px; text-align: center; color: #fff; }
+  .full-hero h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+  .full-hero p { font-size: 16px; opacity: 0.85; margin-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>dfgrow-base</span> Brand Color Picker</h1>
+  <div class="meta">v0.4.0 · 选色 → 复制命令 → 终端粘贴 → 网站自动更新</div>
+</div>
+
+<div class="layout">
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <h2>选择品牌色</h2>
+
+  <div class="picker-row">
+    <div class="color-input-wrap">
+      <input type="color" id="colorPicker" value="#25b1da">
+    </div>
+    <div class="hex-input">
+      <label>HEX 色值</label>
+      <input type="text" id="hexInput" value="#25b1da" maxlength="7" spellcheck="false">
+    </div>
+  </div>
+
+  <h3>预设色</h3>
+  <div class="presets" id="presets"></div>
+
+  <h3>自动色阶 (50~950)</h3>
+  <div class="scale-bar" id="scaleBar"></div>
+  <div class="scale-labels" id="scaleLabels"></div>
+
+  <h3>项目路径</h3>
+  <div style="margin-bottom: 8px;">
+    <input type="text" id="projectPath" value="."
+      style="width:100%; padding:8px 10px; border:2px solid #e5e7eb; border-radius:8px; font-size:12px; font-family:'SF Mono','Fira Code',monospace; color:#374151;"
+      oninput="updateExport()" placeholder="输入项目根目录路径">
+    <p style="font-size:10px; color:#9ca3af; margin-top:4px;">dfgrow.config.ts 所在的项目根目录</p>
+  </div>
+
+  <h3>导出配置</h3>
+  <div class="export-tabs" style="display:grid; grid-template-columns:1fr 1fr 1fr;">
+    <button class="export-tab active" onclick="showExport('cli')">CLI 命令</button>
+    <button class="export-tab" onclick="showExport('config')">config.ts</button>
+    <button class="export-tab" onclick="showExport('css')">CSS 变量</button>
+  </div>
+  <div class="export-code" id="exportCode"></div>
+  <button class="copy-btn" id="copyBtn" onclick="copyExport()">复制命令</button>
+
+  <h3 style="margin-top:32px;">一键部署到 GitHub</h3>
+  <p style="font-size:11px; color:#6b7280; margin-bottom:12px; line-height:1.5;">选色后点击部署，自动更新 dfgrow.config.ts 并触发 CI/CD 构建发布。</p>
+
+  <div style="margin-bottom:10px;">
+    <label style="font-size:11px; color:#9ca3af; display:block; margin-bottom:3px;">GitHub Repo (owner/repo)</label>
+    <input type="text" id="ghRepo" value="your-org/your-repo"
+      style="width:100%; padding:8px 10px; border:2px solid #e5e7eb; border-radius:8px; font-size:12px; font-family:'SF Mono','Fira Code',monospace; color:#374151;"
+      placeholder="your-org/your-repo">
+  </div>
+  <div style="margin-bottom:10px;">
+    <label style="font-size:11px; color:#9ca3af; display:block; margin-bottom:3px;">Branch</label>
+    <input type="text" id="ghBranch" value="main"
+      style="width:100%; padding:8px 10px; border:2px solid #e5e7eb; border-radius:8px; font-size:12px; font-family:'SF Mono','Fira Code',monospace; color:#374151;">
+  </div>
+  <div style="margin-bottom:12px;">
+    <label style="font-size:11px; color:#9ca3af; display:block; margin-bottom:3px;">GitHub Token (repo scope)</label>
+    <input type="password" id="ghToken"
+      style="width:100%; padding:8px 10px; border:2px solid #e5e7eb; border-radius:8px; font-size:12px; font-family:'SF Mono','Fira Code',monospace; color:#374151;"
+      placeholder="ghp_xxxxxxxxxxxx">
+    <p style="font-size:9px; color:#d1d5db; margin-top:3px;">Token 仅在内存中使用，不会存储或上传</p>
+  </div>
+  <button class="copy-btn" id="deployBtn" onclick="deployToGitHub()" style="background:#111827;">
+    部署品牌色到 GitHub
+  </button>
+  <div id="deployStatus" style="margin-top:8px; font-size:11px; line-height:1.6; display:none;"></div>
+</div>
+
+<!-- Preview -->
+<div class="preview-area">
+  <h2>实时预览</h2>
+
+  <div class="preview-grid">
+
+    <!-- Navigation -->
+    <div class="pv-card">
+      <div class="pv-card-header">导航栏</div>
+      <div class="pv-card-body">
+        <div class="pv-nav">
+          <div class="logo" style="color:var(--brand);">登峰增长</div>
+          <div class="links">首页 · 服务 · 案例 · 博客</div>
+          <div class="cta" style="background:var(--brand);">预约咨询</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="pv-card">
+      <div class="pv-card-header">按钮</div>
+      <div class="pv-card-body">
+        <div class="pv-btns">
+          <button class="pv-btn-p" style="background:var(--brand);">主按钮</button>
+          <button class="pv-btn-s" style="color:var(--brand); border-color:var(--brand);">次按钮</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="pv-card" style="grid-column: 1 / -1;">
+      <div class="pv-card-header">Hero 区</div>
+      <div class="pv-card-body">
+        <div class="pv-hero" style="background: linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%);">
+          <h3>自然增长，让搜索和 AI 成为你的获客渠道</h3>
+          <p>专注搜索引擎优化与 AI 搜索优化，技术+内容双线驱动增长</p>
+          <a href="#" class="pv-hero-btn" style="color:var(--brand);">查看服务</a>
+          <a href="#" class="pv-hero-btn-o">预约咨询</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Series Cards -->
+    <div class="pv-card">
+      <div class="pv-card-header">产品系列卡片</div>
+      <div class="pv-card-body">
+        <div class="pv-series-grid">
+          <div class="pv-series-card" style="background: linear-gradient(135deg, var(--brand), var(--brand-400));">
+            <h5>国内 SEO</h5><p>百度 · Bing · 360 · 搜狗</p>
+          </div>
+          <div class="pv-series-card" style="background: linear-gradient(135deg, var(--brand-700), var(--brand));">
+            <h5>出海 SEO</h5><p>Google · 海外 AI 搜索</p>
+          </div>
+          <div class="pv-series-card" style="background: linear-gradient(135deg, var(--brand-800), var(--brand-700));">
+            <h5>AI 搜索优化</h5><p>GEO · AI 获客</p>
+          </div>
+          <div class="pv-series-card" style="background: linear-gradient(135deg, var(--brand-900), var(--brand-800));">
+            <h5>增长型官网</h5><p>15-30页 · Schema</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tag & Card -->
+    <div class="pv-card">
+      <div class="pv-card-header">标签 & 卡片</div>
+      <div class="pv-card-body pv-product-card">
+        <span class="pv-tag" style="background:var(--brand-50); color:var(--brand-700);">国内 SEO</span>
+        <h4>百度 + Bing + 360 + 搜狗 + 头条</h4>
+        <p>全引擎覆盖，技术+内容双线驱动搜索增长</p>
+      </div>
+    </div>
+
+    <!-- Trust Badges -->
+    <div class="pv-card">
+      <div class="pv-card-header">信任徽章</div>
+      <div class="pv-card-body">
+        <div class="pv-trust">
+          <div class="pv-trust-item"><div class="v" style="color:var(--brand);">全引擎</div><div class="l">搜索覆盖</div></div>
+          <div class="pv-trust-item"><div class="v" style="color:var(--brand);">AI搜索</div><div class="l">GEO优化</div></div>
+          <div class="pv-trust-item"><div class="v" style="color:var(--brand);">透明定价</div><div class="l">明码标价</div></div>
+          <div class="pv-trust-item"><div class="v" style="color:var(--brand);">数据驱动</div><div class="l">月度复盘</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Links -->
+    <div class="pv-card">
+      <div class="pv-card-header">链接</div>
+      <div class="pv-card-body pv-links">
+        <a href="#" style="color:var(--brand);">了解更多 →</a>
+        <a href="#" style="color:var(--brand);">查看成分 →</a>
+        <a href="#" style="color:var(--brand);">探索科技 →</a>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="pv-card" style="grid-column: 1 / -1;">
+      <div class="pv-card-header">CTA 区</div>
+      <div class="pv-card-body">
+        <div class="pv-cta-section" style="background: linear-gradient(135deg, var(--brand), var(--brand-700));">
+          <h3>开启自然增长之旅</h3>
+          <p>搜索 + AI 双渠道获客，让增长自然发生</p>
+          <a href="#" class="pv-hero-btn" style="color:var(--brand);">预约咨询 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="pv-card" style="grid-column: 1 / -1;">
+      <div class="pv-card-header">页脚</div>
+      <div class="pv-card-body" style="padding:0;">
+        <div class="pv-footer" style="background:var(--brand-950);">
+          <div class="cols">
+            <div><h4>登峰增长</h4><p>专注搜索和 AI 获客的专业团队，技术+内容双线驱动品牌增长。</p></div>
+            <div><h4>服务</h4><p>国内SEO · 出海SEO · GEO · 官网建设</p></div>
+            <div><h4>关于</h4><p>关于我们 · 核心技术 · 联系我们</p></div>
+          </div>
+          <div class="copy">© 2026 登峰增长 DFGrow · 上海国创无界科技有限公司</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Hero Preview -->
+    <div class="pv-card full-preview">
+      <div class="pv-card-header">首页 Hero 全宽预览</div>
+      <div class="pv-card-body" style="padding:0;">
+        <div class="full-hero" style="background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-800) 50%, var(--brand-900) 100%);">
+          <h2>自然增长 搜索+AI双获客</h2>
+          <p>SEO + GEO — 让搜索和 AI 成为你的获客渠道</p>
+          <a href="#" class="pv-hero-btn" style="color:var(--brand); font-size: 14px; padding: 12px 28px;">查看服务</a>
+          <a href="#" class="pv-hero-btn-o" style="font-size: 14px; padding: 12px 28px;">了解方法论</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- White text test -->
+    <div class="pv-card">
+      <div class="pv-card-header">白底文字可读性</div>
+      <div class="pv-card-body" style="text-align:center;">
+        <div style="font-size: 36px; font-weight: 800; color: var(--brand); margin-bottom: 8px;">登峰增长</div>
+        <div style="font-size: 14px; color: var(--brand);">SEO · GEO · 自然增长</div>
+        <div style="font-size: 12px; color: var(--brand-600); margin-top: 8px;">dfgrow.com</div>
+      </div>
+    </div>
+
+    <!-- Contrast check -->
+    <div class="pv-card">
+      <div class="pv-card-header">对比度检测</div>
+      <div class="pv-card-body" id="contrastCheck"></div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== Color Math =====
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  return { r: parseInt(hex.slice(0,2),16), g: parseInt(hex.slice(2,4),16), b: parseInt(hex.slice(4,6),16) };
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r,g,b].map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2,'0')).join('');
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToRgb(h, s, l) {
+  h /= 360; s /= 100; l /= 100;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1; if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+}
+
+// Generate color scale from base hex
+function generateScale(hex) {
+  const rgb = hexToRgb(hex);
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+  // Map lightness levels: { scale: lightness, saturationAdjust }
+  const steps = [
+    { key: '50',  l: 96, sAdj: -20 },
+    { key: '100', l: 88, sAdj: -10 },
+    { key: '200', l: 78, sAdj: -5  },
+    { key: '300', l: 66, sAdj: 0   },
+    { key: '400', l: 56, sAdj: 2   },
+    { key: '500', l: 50, sAdj: 3   },
+    { key: '600', l: 47, sAdj: 0   },  // base color target
+    { key: '700', l: 38, sAdj: -2  },
+    { key: '800', l: 30, sAdj: -5  },
+    { key: '900', l: 22, sAdj: -8  },
+    { key: '950', l: 14, sAdj: -12 },
+  ];
+
+  // For 600, use the actual base color
+  const scale = {};
+  steps.forEach(step => {
+    if (step.key === '600') {
+      scale[step.key] = hex;
+    } else {
+      const newS = Math.max(0, Math.min(100, hsl.s + step.sAdj));
+      const newL = step.l;
+      const rgb2 = hslToRgb(hsl.h, newS, newL);
+      scale[step.key] = rgbToHex(rgb2.r, rgb2.g, rgb2.b);
+    }
+  });
+
+  return scale;
+}
+
+// Relative luminance
+function luminance(r, g, b) {
+  const [rs, gs, bs] = [r, g, b].map(v => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+function contrastRatio(hex1, hex2) {
+  const c1 = hexToRgb(hex1), c2 = hexToRgb(hex2);
+  const l1 = luminance(c1.r, c1.g, c1.b), l2 = luminance(c2.r, c2.g, c2.b);
+  const lighter = Math.max(l1, l2), darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+// ===== Presets =====
+const PRESETS = [
+  { hex: '#25b1da', name: '亮青蓝' },
+  { hex: '#177f9a', name: '钢蓝' },
+  { hex: '#2563EB', name: '科技蓝' },
+  { hex: '#1a73c7', name: '柔和蓝' },
+  { hex: '#0052A5', name: '深稳蓝' },
+  { hex: '#3B82C4', name: '浅亮蓝' },
+  { hex: '#0d7377', name: '青碧' },
+  { hex: '#6366f1', name: '靛紫' },
+  { hex: '#059669', name: '翠绿' },
+  { hex: '#d97706', name: '琥珀' },
+  { hex: '#dc2626', name: '朱红' },
+  { hex: '#7c3aed', name: '紫罗兰' },
+];
+
+// ===== State =====
+let currentColor = '#25b1da';
+let currentScale = {};
+let exportMode = 'cli';
+
+// ===== Init Presets =====
+function initPresets() {
+  const container = document.getElementById('presets');
+  PRESETS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'preset' + (p.hex.toLowerCase() === currentColor.toLowerCase() ? ' active' : '');
+    el.style.background = p.hex;
+    el.setAttribute('data-name', p.name);
+    el.setAttribute('data-hex', p.hex);
+    el.onclick = () => setColor(p.hex);
+    container.appendChild(el);
+  });
+}
+
+// ===== Update everything =====
+function setColor(hex) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+  currentColor = hex.toLowerCase();
+  currentScale = generateScale(currentColor);
+
+  // Update inputs
+  document.getElementById('colorPicker').value = currentColor;
+  document.getElementById('hexInput').value = currentColor;
+
+  // Update CSS variables
+  const root = document.documentElement;
+  root.style.setProperty('--brand', currentColor);
+  Object.entries(currentScale).forEach(([key, val]) => {
+    root.style.setProperty(`--brand-${key}`, val);
+  });
+
+  // Update scale bar
+  updateScaleBar();
+
+  // Update presets active state
+  document.querySelectorAll('.preset').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-hex').toLowerCase() === currentColor);
+  });
+
+  // Update export
+  updateExport();
+
+  // Update contrast check
+  updateContrast();
+}
+
+function updateScaleBar() {
+  const bar = document.getElementById('scaleBar');
+  const labels = document.getElementById('scaleLabels');
+  const keys = ['50','100','200','300','400','500','600','700','800','900','950'];
+
+  bar.innerHTML = keys.map(k => {
+    const isDark = parseInt(k) >= 500;
+    return `<div class="scale-swatch" style="background:${currentScale[k]};"><span style="color:${isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.45)'}">${currentScale[k]}</span></div>`;
+  }).join('');
+
+  labels.innerHTML = keys.map(k => `<span>${k}</span>`).join('');
+}
+
+function updateExport() {
+  const code = document.getElementById('exportCode');
+  const copyBtn = document.getElementById('copyBtn');
+  const projectDir = document.getElementById('projectPath').value.trim() || '.';
+
+  if (exportMode === 'cli') {
+    code.textContent = `npx dfgrow-update-brand-color '${currentColor}' "${projectDir}"`;
+    copyBtn.textContent = '复制命令';
+  } else if (exportMode === 'config') {
+    code.textContent = `// dfgrow.config.ts → site.theme
+theme: {
+  brandColor: '${currentColor}',
+},`;
+    copyBtn.textContent = '复制配置';
+  } else {
+    const keys = ['50','100','200','300','400','500','600','700','800','900','950'];
+    code.textContent = `/* src/styles/overrides.css */\n/* (不再需要手动维护 — dfgrow-base 已自动从 brandColor 生成色阶) */\n:root {\n${keys.map(k => `  --df-brand-${k.padEnd(3)}: ${currentScale[k]};`).join('\n')}\n}`;
+    copyBtn.textContent = '复制 CSS';
+  }
+}
+
+function updateContrast() {
+  const el = document.getElementById('contrastCheck');
+  const onWhite = contrastRatio(currentColor, '#ffffff');
+  const onLightBg = contrastRatio(currentColor, '#f9fafb');
+  const whiteOnBrand = contrastRatio('#ffffff', currentColor);
+  const whiteOnDark = contrastRatio('#ffffff', currentScale['700'] || currentColor);
+
+  const badge = (ratio, label) => {
+    const pass = ratio >= 4.5;
+    const passAA = ratio >= 3;
+    let tag = pass ? '<span style="color:#059669;font-weight:700;">AAA ✓</span>' :
+              passAA ? '<span style="color:#d97706;font-weight:700;">AA ✓</span>' :
+              '<span style="color:#dc2626;font-weight:700;">不达标 ✗</span>';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;">
+      <span style="font-size:12px;color:#6b7280;">${label}</span>
+      <span style="font-size:12px;">${ratio.toFixed(2)}:1 ${tag}</span>
+    </div>`;
+  };
+
+  el.innerHTML = [
+    badge(onWhite, '品牌色 / 白底 (正文)'),
+    badge(onLightBg, '品牌色 / 浅灰底'),
+    badge(whiteOnBrand, '白字 / 品牌色底 (按钮)'),
+    badge(whiteOnDark, '白字 / 700色底 (渐变)'),
+  ].join('');
+}
+
+function showExport(mode) {
+  exportMode = mode;
+  document.querySelectorAll('.export-tab').forEach((t, i) => {
+    const modes = ['cli', 'config', 'css'];
+    t.classList.toggle('active', modes[i] === mode);
+  });
+  updateExport();
+}
+
+function copyExport() {
+  const text = document.getElementById('exportCode').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '已复制!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = exportMode === 'cli' ? '复制命令' : exportMode === 'css' ? '复制 CSS' : '复制配置';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+
+// ===== GitHub Deploy =====
+const CONFIG_PATH = 'dfgrow.config.ts';
+const API_BASE = 'https://api.github.com';
+
+function showStatus(msg, type) {
+  const el = document.getElementById('deployStatus');
+  el.style.display = 'block';
+  const colors = { info: '#6b7280', success: '#059669', error: '#dc2626', loading: '#2563eb' };
+  el.innerHTML = `<span style="color:${colors[type] || colors.info}">${msg}</span>`;
+}
+
+async function deployToGitHub() {
+  const repo = document.getElementById('ghRepo').value.trim();
+  const branch = document.getElementById('ghBranch').value.trim() || 'main';
+  const token = document.getElementById('ghToken').value.trim();
+  const btn = document.getElementById('deployBtn');
+
+  if (!repo || !token) {
+    showStatus('请填写 GitHub Repo 和 Token', 'error');
+    return;
+  }
+  if (!repo.includes('/')) {
+    showStatus('Repo 格式应为 owner/repo（如 your-org/your-repo）', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '部署中...';
+  showStatus('正在读取 dfgrow.config.ts ...', 'loading');
+
+  try {
+    // Step 1: Get current file from GitHub
+    const fileUrl = `${API_BASE}/repos/${repo}/contents/${CONFIG_PATH}?ref=${branch}`;
+    const getRes = await fetch(fileUrl, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!getRes.ok) {
+      const errText = getRes.status === 404
+        ? `在 ${repo} 的 ${branch} 分支未找到 ${CONFIG_PATH}，请确认仓库和路径`
+        : `GitHub API 错误 (${getRes.status})：${(await getRes.json()).message || '未知错误'}`;
+      showStatus(errText, 'error');
+      btn.disabled = false;
+      btn.textContent = '部署品牌色到 GitHub';
+      return;
+    }
+    const fileData = await getRes.json();
+    const sha = fileData.sha;
+    const content = decodeBase64(fileData.content);
+
+    // Step 2: Update brandColor in the content
+    const brandColorRegex = /brandColor:\s*['"]#[0-9a-fA-F]{6}['"]/i;
+    if (!brandColorRegex.test(content)) {
+      showStatus(`在 ${CONFIG_PATH} 中未找到 brandColor 配置`, 'error');
+      btn.disabled = false;
+      btn.textContent = '部署品牌色到 GitHub';
+      return;
+    }
+
+    const oldMatch = content.match(/#([0-9a-fA-F]{6})/i);
+    const oldColor = oldMatch ? '#' + oldMatch[1].toLowerCase() : 'unknown';
+    const updatedContent = content.replace(brandColorRegex, (m) => {
+      const q = m.includes("'") ? "'" : '"';
+      return `brandColor: ${q}${currentColor}${q}`;
+    });
+
+    if (oldColor === currentColor) {
+      showStatus(`品牌色已经是 ${currentColor}，无需更新`, 'info');
+      btn.disabled = false;
+      btn.textContent = '部署品牌色到 GitHub';
+      return;
+    }
+
+    showStatus(`正在提交: ${oldColor} → ${currentColor} ...`, 'loading');
+
+    // Step 3: Commit updated file
+    const commitRes = await fetch(fileUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `chore: update brand color ${oldColor} → ${currentColor}`,
+        content: encodeBase64(updatedContent),
+        sha: sha,
+        branch: branch,
+      }),
+    });
+
+    if (!commitRes.ok) {
+      const err = await commitRes.json();
+      showStatus(`提交失败 (${commitRes.status})：${err.message || '请检查 Token 权限'}`, 'error');
+      btn.disabled = false;
+      btn.textContent = '部署品牌色到 GitHub';
+      return;
+    }
+
+    const commitData = await commitRes.json();
+    const commitSha = commitData.commit.sha.slice(0, 7);
+    const actionsUrl = `https://github.com/${repo}/actions`;
+
+    showStatus(
+      `部署成功! commit <a href="https://github.com/${repo}/commit/${commitData.commit.sha}" target="_blank" style="color:#059669;">${commitSha}</a><br>` +
+      `brandColor: ${oldColor} → ${currentColor}<br>` +
+      `<a href="${actionsUrl}" target="_blank" style="color:#2563eb;">查看 CI/CD 构建进度 →</a>`,
+      'success'
+    );
+    btn.textContent = '部署品牌色到 GitHub';
+    btn.disabled = false;
+
+  } catch (err) {
+    showStatus(`部署失败：${err.message}`, 'error');
+    btn.disabled = false;
+    btn.textContent = '部署品牌色到 GitHub';
+  }
+}
+
+function decodeBase64(str) {
+  // GitHub returns base64 with newlines, strip them first
+  const clean = str.replace(/\n/g, '');
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+function encodeBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+// ===== Event listeners =====
+document.getElementById('colorPicker').addEventListener('input', e => setColor(e.target.value));
+document.getElementById('hexInput').addEventListener('input', e => {
+  let val = e.target.value.trim();
+  if (!val.startsWith('#')) val = '#' + val;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) setColor(val);
+});
+document.getElementById('hexInput').addEventListener('blur', e => {
+  e.target.value = currentColor;
+});
+
+// ===== Init =====
+initPresets();
+setColor('#25b1da');
+</script>
+
+</body>
+</html>

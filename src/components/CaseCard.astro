@@ -1,0 +1,129 @@
+---
+/**
+ * 案例卡片组件（通用）
+ *
+ * Props 接受任意形状，不做业务假设。
+ * 客户项目传入自己的数据即可。
+ *
+ * Props:
+ *   slug: string — 案例标识
+ *   title: string
+ *   industry?: string
+ *   summary?: string
+ *   metrics?: Array<{ label: string; value: string; unit?: string }>
+ *   status?: string — 可选状态标记（如 "进行中"）
+ *   href?: string — 链接（默认 /cases/{slug}）
+ */
+interface Props {
+  slug: string;
+  title: string;
+  industry?: string;
+  summary?: string;
+  metrics?: Array<{ label: string; value: string; unit?: string }>;
+  status?: string;
+  href?: string;
+}
+
+const {
+  slug,
+  title,
+  industry,
+  summary,
+  metrics = [],
+  status,
+  href,
+} = Astro.props;
+
+const link = href ?? `/cases/${slug}`;
+---
+
+<a href={link} class="df-case-card" data-track="case_card_click" data-track-slug={slug}>
+  <div class="df-case-card__body">
+    <div class="df-case-card__header">
+      {industry && <span class="df-case-card__industry">{industry}</span>}
+      {status && <span class="df-case-card__status">{status}</span>}
+    </div>
+    <h3 class="df-case-card__title">{title}</h3>
+    {summary && <p class="df-case-card__summary">{summary}</p>}
+    {metrics.length > 0 && (
+      <div class="df-case-card__metrics">
+        {metrics.map((m) => (
+          <div class="df-case-card__metric">
+            <span class="df-case-card__metric-value">{m.value}</span>
+            <span class="df-case-card__metric-label">{m.label}</span>
+            {m.unit && <span class="df-case-card__metric-unit">{m.unit}</span>}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+  <div class="df-case-card__footer">
+    <span class="df-case-card__arrow">→</span>
+  </div>
+</a>
+
+<style is:inline>
+  .df-case-card {
+    display: flex; flex-direction: column;
+    border-radius: var(--radius-card, 12px);
+    border: 1px solid var(--color-ink-200, #e5e7eb);
+    overflow: hidden; text-decoration: none; color: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .df-case-card:hover {
+    border-color: var(--color-brand-300, #93b4f5);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--color-brand-600, #1f44d6) 8%, transparent);
+    transform: translateY(-2px);
+  }
+  .df-case-card:focus-visible {
+    outline: 2px solid var(--color-brand-500, #1f44d6);
+    outline-offset: 2px;
+  }
+  .df-case-card__body {
+    flex: 1; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+  }
+  .df-case-card__header {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .df-case-card__industry {
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--color-brand-600, #1f44d6);
+    background: var(--color-brand-50, #eef2ff);
+    padding: 0.125rem 0.5rem; border-radius: 9999px;
+  }
+  .df-case-card__status {
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--color-ink-500, #6b7280);
+    background: var(--color-ink-100, #f3f4f6);
+    padding: 0.125rem 0.5rem; border-radius: 9999px;
+  }
+  .df-case-card__title {
+    font-size: 1.125rem; font-weight: 600;
+    color: var(--color-ink-900, #111); line-height: 1.4; margin: 0;
+  }
+  .df-case-card__summary {
+    font-size: 0.875rem; color: var(--color-ink-600, #4b5563);
+    line-height: 1.6; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .df-case-card__metrics {
+    display: flex; gap: 1rem; margin-top: auto; padding-top: 0.75rem;
+  }
+  .df-case-card__metric { display: flex; flex-direction: column; gap: 0.125rem; }
+  .df-case-card__metric-value { font-size: 1.25rem; font-weight: 700; color: var(--color-brand-600, #1f44d6); }
+  .df-case-card__metric-label { font-size: 0.6875rem; color: var(--color-ink-500, #6b7280); text-transform: uppercase; letter-spacing: 0.025em; }
+  .df-case-card__metric-unit { font-size: 0.6875rem; color: var(--color-ink-400, #9ca3af); }
+  .df-case-card__footer {
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--color-ink-100, #f3f4f6);
+    background: var(--color-ink-50, #f9fafb);
+  }
+  .df-case-card__arrow {
+    font-size: 1rem; color: var(--color-brand-600, #1f44d6);
+    transition: transform 0.2s ease;
+  }
+  .df-case-card:hover .df-case-card__arrow { transform: translateX(4px); }
+</style>

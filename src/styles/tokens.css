@@ -1,0 +1,88 @@
+/* @gcwjkj/dfgrow-base — Design Tokens */
+/* 客户通过设置 CSS 变量覆盖 — 在 import core styles 之前定义 --df-* 即可 */
+
+@import "tailwindcss";
+
+/* 扫描 core 包自身的源文件，确保组件中的 Tailwind 类名被识别 */
+@source "../components/**/*.astro";
+@source "../layouts/**/*.astro";
+
+/* 非 Tailwind 标准的自定义变量 — 放在 @theme 外部以确保始终输出 */
+@layer base {
+  :root {
+    --container-max: var(--df-container-max, 1200px);
+    --shadow-soft: var(--df-shadow-soft, 0 1px 2px rgba(15, 33, 97, 0.04), 0 4px 16px rgba(15, 33, 97, 0.06));
+    --shadow-lift: var(--df-shadow-lift, 0 8px 24px rgba(15, 33, 97, 0.08));
+  }
+}
+
+@theme {
+  /* Brand palette — 通过 --df-brand-* 覆盖 */
+  --color-brand-50: var(--df-brand-50, #eef4ff);
+  --color-brand-100: var(--df-brand-100, #d9e6ff);
+  --color-brand-200: var(--df-brand-200, #bcd2ff);
+  --color-brand-300: var(--df-brand-300, #8eb3ff);
+  --color-brand-400: var(--df-brand-400, #5a87ff);
+  --color-brand-500: var(--df-brand-500, #3563f5);
+  --color-brand-600: var(--df-brand-600, #1f44d6);
+  --color-brand-700: var(--df-brand-700, #1a36a8);
+  --color-brand-800: var(--df-brand-800, #142a82);
+  --color-brand-900: var(--df-brand-900, #0f2161);
+  --color-brand-950: var(--df-brand-950, #0a163f);
+
+  /* Accent palette */
+  --color-accent-50: var(--df-accent-50, #fefbe8);
+  --color-accent-100: var(--df-accent-100, #fff6c2);
+  --color-accent-200: var(--df-accent-200, #ffeb87);
+  --color-accent-300: var(--df-accent-300, #ffd942);
+  --color-accent-400: var(--df-accent-400, #ffc419);
+  --color-accent-500: var(--df-accent-500, #f5a200);
+  --color-accent-600: var(--df-accent-600, #a84d00);
+  --color-accent-700: var(--df-accent-700, #91450a);
+  --color-accent-800: var(--df-accent-800, #78390c);
+  --color-accent-900: var(--df-accent-900, #5c2a08);
+
+  /* Neutral/Ink palette */
+  --color-ink-50: var(--df-ink-50, #f7f7f8);
+  --color-ink-100: var(--df-ink-100, #ededf0);
+  --color-ink-200: var(--df-ink-200, #d8d8df);
+  --color-ink-300: var(--df-ink-300, #b6b6c2);
+  --color-ink-400: var(--df-ink-400, #69697a);
+  --color-ink-500: var(--df-ink-500, #6e6e7f);
+  --color-ink-600: var(--df-ink-600, #555566);
+  --color-ink-700: var(--df-ink-700, #444452);
+  --color-ink-800: var(--df-ink-800, #2c2c38);
+  --color-ink-900: var(--df-ink-900, #1a1a23);
+  --color-ink-950: var(--df-ink-950, #0d0d14);
+
+  /* Fonts */
+  --font-sans: var(--df-font-sans, "Inter", "PingFang SC", "Microsoft YaHei", "Source Han Sans CN", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+  --font-mono: var(--df-font-mono, "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Consolas, monospace);
+
+  /* ===== Semantic type scale =====
+     承载字号+行高+字距+字重，自动生成 text-display / text-h1 / text-h2 / text-h3 工具类。
+     对齐 web-design-professionalize skill 的 design-tokens 规范。 */
+  --text-display: var(--df-text-display, clamp(2.25rem, 5vw, 2.625rem));
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+
+  --text-h1: var(--df-text-h1, clamp(1.75rem, 3vw, 2rem));
+  --text-h1--line-height: 1.15;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: var(--df-text-h2, clamp(1.5rem, 2.5vw, 1.75rem));
+  --text-h2--line-height: 1.2;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h2--font-weight: 600;
+
+  --text-h3: var(--df-text-h3, 1.25rem);
+  --text-h3--line-height: 1.3;
+  --text-h3--font-weight: 600;
+
+  /* ===== Semantic radius =====
+     自动生成 rounded-btn / rounded-card 工具类。 */
+  --radius-btn:  var(--df-radius-btn, 0.375rem);   /* 6px — 控件：按钮/输入/标签丸 */
+  --radius-card: var(--df-radius-card, 0.5rem);    /* 8px — 卡片/面板 */
+}

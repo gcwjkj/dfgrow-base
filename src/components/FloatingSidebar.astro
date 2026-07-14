@@ -1,0 +1,418 @@
+---
+import { floatingSidebarConfig } from 'virtual:dfgrow/config';
+
+const config = floatingSidebarConfig;
+if (!config) {
+  return; // 未配置则不渲染
+}
+
+const items = config.items ?? [];
+const showBackToTop = config.showBackToTop !== false;
+const desktopOnly = config.desktopOnly !== false;
+const qrCodes = config.qrCodes ?? [];
+
+// 内置图标 SVG path (viewBox 0 0 24 24)
+const builtinIcons: Record<string, string> = {
+  proposal: 'M9 2h6a1 1 0 011 1v1h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1h3V3a1 1 0 011-1zm2 3h2v2h-2V5zm-2 5h6v1H9v-1zm0 3h6v1H9v-1zm0 3h4v1H9v-1z',
+  chat: 'M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-3 12H7c-.55 0-1-.45-1-1s.45-1 1-1h10c.55 0 1 .45 1 1s-.45 1-1 1zm0-3H7c-.55 0-1-.45-1-1s.45-1 1-1h10c.55 0 1 .45 1 1s-.45 1-1 1zm0-3H7c-.55 0-1-.45-1-1s.45-1 1-1h10c.55 0 1 .45 1 1s-.45 1-1 1z',
+  phone: 'M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z',
+  'arrow-up': 'M12 19V5m-7 7l7-7 7 7',
+  qr: 'M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 13h2v2h-2zM19 15h2v2h-2zM17 17h2v2h-2zM15 19h2v2h-2zM19 19h2v2h-2z',
+};
+
+function resolveIcon(name: string): { type: 'svg' | 'stroke'; value: string } {
+  if (builtinIcons[name]) return { type: 'svg', value: builtinIcons[name] };
+  if (/^[Mm]/.test(name)) return { type: 'svg', value: name };
+  return { type: 'svg', value: '' };
+}
+---
+
+<aside
+  id="df-floating-sidebar"
+  class="df-floating-sidebar"
+  data-desktop-only={desktopOnly ? '' : undefined}
+>
+  <!-- QR 二维码弹出面板 -->
+  {qrCodes.length > 0 && (
+    <div id="df-qr-panel" class="df-qr-panel">
+      <div class="df-qr-panel-header">
+        <span class="df-qr-panel-title">扫码联系我们</span>
+        <button id="df-qr-close" class="df-qr-close" type="button" aria-label="关闭">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="df-qr-cards">
+        {qrCodes.map((qr) => (
+          <div class="df-qr-card">
+            <img src={qr.image} alt={qr.label} width="120" height="120" loading="lazy" />
+            <span class="df-qr-card-label">{qr.label}</span>
+            {qr.description && <span class="df-qr-card-desc">{qr.description}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+  <div class="df-float-inner">
+    <!-- value tooltip 气泡 -->
+    <div id="df-float-tip" class="df-float-tip"><span id="df-float-tip-label" class="df-tip-label"></span><span id="df-float-tip-text" class="df-tip-value"></span></div>
+    {items.map((item) => {
+      const icon = resolveIcon(item.icon);
+      const hasValue = Boolean(item.value);
+      const isExternal = item.external === true;
+
+      if (hasValue) {
+        return (
+          <button class="df-float-item df-float-val" type="button" data-value={item.value}>
+            <span class="df-float-circle">
+              {icon.value ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d={icon.value} /></svg>
+              ) : null}
+            </span>
+            <span class="df-float-label">{item.label}</span>
+          </button>
+        );
+      }
+
+      return (
+        <a
+          href={item.href || '#'}
+          class="df-float-item"
+          target={isExternal ? '_blank' : undefined}
+          rel={isExternal ? 'noopener noreferrer' : undefined}
+        >
+          <span class="df-float-circle">
+            {icon.value && item.icon !== 'arrow-up' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d={icon.value} /></svg>
+            ) : icon.value && item.icon === 'arrow-up' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={icon.value} /></svg>
+            ) : null}
+          </span>
+          <span class="df-float-label">{item.label}</span>
+        </a>
+      );
+    })}
+    {qrCodes.length > 0 && (
+      <button id="df-qr-toggle" class="df-float-item" type="button" aria-label="扫码联系">
+        <span class="df-float-circle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d={builtinIcons.qr} /></svg>
+        </span>
+        <span class="df-float-label">扫码联系</span>
+      </button>
+    )}
+    {showBackToTop && (
+      <button id="df-float-top" class="df-float-item df-float-top" type="button" aria-label="回到顶部">
+        <span class="df-float-circle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+          </svg>
+        </span>
+        <span class="df-float-label">顶部</span>
+      </button>
+    )}
+  </div>
+</aside>
+
+<style is:inline>
+  .df-floating-sidebar {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 8000;
+    display: none;
+  }
+  .df-floating-sidebar[data-desktop-only] {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .df-floating-sidebar[data-desktop-only] {
+      display: block;
+    }
+  }
+  @media (min-width: 768px) {
+    .df-floating-sidebar:not([data-desktop-only]) {
+      display: block;
+    }
+  }
+  .df-float-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #fff;
+    border-radius: 12px 0 0 12px;
+    padding: 8px 6px;
+    box-shadow: -4px 0 20px rgba(0,0,0,.1);
+  }
+  .df-float-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+  .df-float-item:hover { background: #f1f5f9; }
+  .df-float-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-brand-600, #1f44d6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .df-float-item:hover .df-float-circle {
+    background: var(--color-brand-700, #1a3ab5);
+    transform: scale(1.05);
+  }
+  .df-float-label {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 4px;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .df-float-top {
+    opacity: 0;
+    visibility: hidden;
+    max-height: 0;
+    padding: 0 6px;
+    overflow: hidden;
+    transition: opacity 0.3s, visibility 0.3s, max-height 0.3s, padding 0.3s;
+  }
+  .df-float-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    max-height: 80px;
+    padding: 4px 6px;
+  }
+
+  /* QR 二维码弹出面板 */
+  .df-qr-panel {
+    position: absolute;
+    right: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) translateX(10px);
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: -4px 0 24px rgba(0,0,0,.12), 0 4px 24px rgba(0,0,0,.08);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+    min-width: 160px;
+    z-index: 8001;
+  }
+  .df-qr-panel.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+  }
+  .df-qr-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .df-qr-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .df-qr-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #94a3b8;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+    padding: 0;
+  }
+  .df-qr-close:hover {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .df-qr-cards {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .df-qr-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .df-qr-card img {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    object-fit: contain;
+  }
+  .df-qr-card-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+  }
+  .df-qr-card-desc {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+
+  /* value 气泡卡片 */
+  .df-float-tip {
+    position: absolute;
+    right: calc(100% + 12px);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    z-index: 8002;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04);
+  }
+  .df-float-tip::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .df-float-tip.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+    user-select: text;
+  }
+  .df-tip-label {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+  .df-tip-value {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    letter-spacing: 0.5px;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    /* 回到顶部 */
+    var topBtn = document.getElementById('df-float-top');
+    if (topBtn) {
+      var THRESHOLD = 600;
+      function onScroll() {
+        if (window.scrollY > THRESHOLD) {
+          topBtn.classList.add('is-visible');
+        } else {
+          topBtn.classList.remove('is-visible');
+        }
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+      topBtn.addEventListener('click', function () {
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+      });
+    }
+
+    /* QR 二维码面板 - 鼠标移入移出触发 */
+    var toggleBtn = document.getElementById('df-qr-toggle');
+    var panel = document.getElementById('df-qr-panel');
+    var closeBtn = document.getElementById('df-qr-close');
+    if (toggleBtn && panel) {
+      var qrTimer = null;
+      function openPanel() {
+        clearTimeout(qrTimer);
+        panel.classList.add('is-open');
+      }
+      function closePanel() {
+        qrTimer = setTimeout(function () { panel.classList.remove('is-open'); }, 200);
+      }
+      toggleBtn.addEventListener('mouseenter', openPanel);
+      toggleBtn.addEventListener('mouseleave', closePanel);
+      panel.addEventListener('mouseenter', openPanel);
+      panel.addEventListener('mouseleave', closePanel);
+      if (closeBtn) closeBtn.addEventListener('click', function () { clearTimeout(qrTimer); panel.classList.remove('is-open'); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && panel.classList.contains('is-open')) {
+          clearTimeout(qrTimer);
+          panel.classList.remove('is-open');
+        }
+      });
+    }
+
+    /* value 气泡卡片（电话号码等）- 鼠标移入移出触发 */
+    var tip = document.getElementById('df-float-tip');
+    var tipText = document.getElementById('df-float-tip-text');
+    var tipLabel = document.getElementById('df-float-tip-label');
+    var valBtns = document.querySelectorAll('.df-float-val');
+    if (tip && tipText && valBtns.length) {
+      var tipTimer = null;
+      function showTip(btn) {
+        clearTimeout(tipTimer);
+        var val = btn.getAttribute('data-value');
+        if (!val) return;
+        /* 如果 QR 面板开着，先关掉 */
+        if (panel) panel.classList.remove('is-open');
+        tipText.textContent = val;
+        if (tipLabel) tipLabel.textContent = btn.querySelector('.df-float-label').textContent;
+        /* 定位到按钮垂直居中 */
+        var btnRect = btn.getBoundingClientRect();
+        var sidebarRect = btn.closest('.df-floating-sidebar').getBoundingClientRect();
+        var top = btnRect.top + btnRect.height / 2 - sidebarRect.top;
+        tip.style.top = top + 'px';
+        tip.classList.add('is-visible');
+      }
+      function hideTip() {
+        tipTimer = setTimeout(function () { tip.classList.remove('is-visible'); }, 200);
+      }
+      valBtns.forEach(function (btn) {
+        btn.addEventListener('mouseenter', function () { showTip(btn); });
+        btn.addEventListener('mouseleave', hideTip);
+      });
+      /* 鼠标移入气泡保持显示，便于复制号码 */
+      tip.addEventListener('mouseenter', function () { clearTimeout(tipTimer); });
+      tip.addEventListener('mouseleave', hideTip);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { clearTimeout(tipTimer); tip.classList.remove('is-visible'); }
+      });
+    }
+  })();
+</script>

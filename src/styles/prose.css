@@ -1,0 +1,40 @@
+/* @gcwjkj/dfgrow-base — Prose Styles (.prose-cn) */
+@reference "./tokens.css";
+
+@layer components {
+  .prose-cn {
+    @apply text-ink-700 leading-relaxed;
+  }
+  .prose-cn h2 { @apply text-xl md:text-2xl mt-10 mb-3; }
+  .prose-cn h3 { @apply text-lg md:text-xl mt-6 mb-2; }
+  .prose-cn p { @apply my-4; }
+  .prose-cn ul { @apply list-disc pl-6 my-4 space-y-2; }
+  .prose-cn ol { @apply list-decimal pl-6 my-4 space-y-2; }
+  .prose-cn blockquote {
+    @apply border-l-4 border-brand-300 pl-4 my-6 text-ink-600 italic;
+  }
+  .prose-cn code {
+    @apply bg-ink-100 text-ink-800 px-1.5 py-0.5 rounded text-[0.9em];
+  }
+  .prose-cn pre {
+    @apply bg-ink-900 text-ink-100 p-4 rounded-lg overflow-x-auto my-6;
+  }
+  .prose-cn table {
+    @apply w-full my-6 border-collapse text-sm block md:table overflow-x-auto;
+  }
+  .prose-cn thead {
+    @apply border-b-2 border-ink-200;
+  }
+  .prose-cn th {
+    @apply text-left font-semibold text-ink-900 px-3 py-2 md:whitespace-nowrap;
+  }
+  .prose-cn td {
+    @apply px-3 py-2 border-b border-ink-100 align-top;
+  }
+  .prose-cn tbody tr:hover {
+    @apply bg-ink-50;
+  }
+  .prose-cn pre code {
+    @apply bg-transparent text-inherit p-0;
+  }
+}

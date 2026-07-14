@@ -1,0 +1,40 @@
+---
+interface Item {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  items: Item[];
+  className?: string;
+}
+
+const { items, className } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <nav aria-label="breadcrumb" class:list={['text-sm text-ink-500', className]}>
+      <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {items.map((item, index) => {
+          const isLast = index === items.length - 1;
+
+          return (
+            <>
+              <li>
+                {item.href && !isLast ? (
+                  <a href={item.href} class="no-underline transition-colors hover:text-brand-600">
+                    {item.label}
+                  </a>
+                ) : (
+                  <span class:list={[isLast && 'text-ink-700']}>{item.label}</span>
+                )}
+              </li>
+              {!isLast && <li aria-hidden="true" class="text-ink-300">/</li>}
+            </>
+          );
+        })}
+      </ol>
+    </nav>
+  )
+}

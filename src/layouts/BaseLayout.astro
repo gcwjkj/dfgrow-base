@@ -1,0 +1,165 @@
+---
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/prose.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Seo from '../components/Seo.astro';
+import Analytics from '../components/Analytics.astro';
+import FloatingSidebar from '../components/FloatingSidebar.astro';
+import { getOrganizationSchema, getWebSiteSchema, getPersonSchema, getSpeakableSchema, getSiteNavigationElementSchema, buildCanonical, cleanPathname, type SeoMeta } from '../lib/seo.js';
+import { siteConfig, themeConfig, seoConfig, i18nConfig, speculationConfig } from 'virtual:dfgrow/config';
+import { generateBrandScale } from '../lib/generate-brand-scale.mjs';
+
+// Auto-generate brand color scale from brandColor config
+// This eliminates the need for manual --df-brand-* CSS overrides
+const brandScale = generateBrandScale(themeConfig.brandColor);
+const brandCSSVars = Object.entries(brandScale)
+  .map(([k, v]) => `--df-brand-${k.padEnd(3)}:${v}`)
+  .join(';');
+
+interface Props extends Partial<SeoMeta> {
+  schemas?: Array<Record<string, unknown>>;
+  bodyClass?: string;
+}
+
+const { schemas = [], bodyClass, ...seo } = Astro.props;
+const pathname = Astro.url.pathname;
+const isProd = import.meta.env.PROD;
+const ga4Id = import.meta.env.PUBLIC_GA4_ID;
+const clarityId = import.meta.env.PUBLIC_CLARITY_ID;
+const baiduId = import.meta.env.PUBLIC_BAIDU_TONGJI_ID;
+
+const canonicalUrl = buildCanonical(pathname);
+const speakableSchema = getSpeakableSchema({
+  title: seo.title ?? siteConfig.tagline,
+  description: seo.description ?? siteConfig.description,
+  url: canonicalUrl,
+});
+const allSchemas = [getOrganizationSchema(), getWebSiteSchema(), getPersonSchema(), speakableSchema, getSiteNavigationElementSchema(), ...schemas];
+
+const features = seoConfig.features ?? {};
+const originUrl = new URL(siteConfig.url).origin;
+
+// 动态构建 CSP：仅当对应分析工具已配置时才引入其域名，避免国内用户产生无效 DNS 解析
+const cspScriptSrc = ["'self'", "'unsafe-inline'", "https://hm.baidu.com"];
+const cspImgSrc = ["'self'", "data:"];
+const cspConnectSrc = ["'self'", "https://hm.baidu.com", "https://api.indexnow.org", "https://ssl.bing.com"];
+const cspFormAction = ["'self'"];
+if (ga4Id) {
+  cspScriptSrc.push("https://www.googletagmanager.com");
+  cspImgSrc.push("https://www.googletagmanager.com");
+  cspConnectSrc.push("https://www.google-analytics.com");
+  cspFormAction.push("https://www.googletagmanager.com");
+}
+if (clarityId) {
+  cspScriptSrc.push("https://www.clarity.ms");
+  cspImgSrc.push("https://www.clarity.ms");
+  cspConnectSrc.push("https://www.clarity.ms");
+}
+const csp = `default-src 'self'; script-src ${cspScriptSrc.join(' ')}; style-src 'self' 'unsafe-inline'; img-src ${cspImgSrc.join(' ')}; connect-src ${cspConnectSrc.join(' ')}; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action ${cspFormAction.join(' ')};`;
+
+// 验证码：仅在环境变量存在时输出，避免空 meta 标签和硬编码 fallback
+const baiduVerification = import.meta.env.PUBLIC_BAIDU_VERIFICATION_CODE;
+const sogouVerification = import.meta.env.PUBLIC_SOGOU_VERIFICATION_CODE;
+const verification360 = import.meta.env.PUBLIC_360_VERIFICATION_CODE;
+const byteVerification = import.meta.env.PUBLIC_BYTE_VERIFICATION_CODE;
+---
+
+<!doctype html>
+<html lang={siteConfig.locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content={themeConfig.brandColor} />
+
+    {/* Auto-generated brand color scale from themeConfig.brandColor */}
+    <style is:inline set:html={`:root{${brandCSSVars}}`} />
+
+    {features.chinaSeo && (
+      <>
+        {baiduVerification && <meta name="baidu-site-verification" content={baiduVerification} />}
+        {sogouVerification && <meta name="sogou_site_verification" content={sogouVerification} />}
+        {verification360 && <meta name="360-site-verification" content={verification360} />}
+        {byteVerification && <meta name="bytedance-verification-code" content={byteVerification} />}
+        <meta name="renderer" content="webkit" />
+        <meta name="applicable-device" content="pc,mobile" />
+      </>
+    )}
+
+    <meta http-equiv="Content-Security-Policy" content={csp} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {/* Web App Manifest + Service Worker 统一由 features.serviceWorker 控制。
+        关闭时既不注册 sw.js，也不引用 manifest.json，避免两个 404。
+        PWA 能力（manifest + sw）在实际使用中始终成对出现，共用一个开关。 */}
+    {features.serviceWorker && (
+      <>
+        <link rel="manifest" href="/manifest.json" />
+        <script is:inline>
+          // 注册 Service Worker
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/sw.js').catch(() => {
+                // 静默失败，不影响正常访问
+              });
+            });
+          }
+        </script>
+      </>
+    )}
+
+    <link rel="alternate" type="application/rss+xml" title={`${siteConfig.name} - 资源中心`} href="/rss.xml" />
+
+    {features.llmsTxt && (
+      <link rel="alternate" type="text/plain" title="LLM-friendly site description" href="/llms.txt" />
+    )}
+
+    {isProd && ga4Id && <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />}
+    {isProd && clarityId && <link rel="preconnect" href="https://www.clarity.ms" crossorigin />}
+    {isProd && baiduId && <link rel="preconnect" href="https://hm.baidu.com" crossorigin />}
+
+    {/* 单语言站点仅输出 x-default hreflang，避免 Google Search Central 报告重复页面。
+        推出英文版后，改为输出 zh-CN + en-US + x-default 三条 hreflang。 */}
+    <link rel="alternate" hreflang="x-default" href={`${siteConfig.url}${cleanPathname(pathname)}`} />
+
+    <Seo pathname={pathname} {...seo} />
+
+    {allSchemas.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
+
+    <Analytics />
+
+    <script type="speculationrules" set:html={JSON.stringify({
+      prerender: [
+        {
+          source: "document",
+          where: {
+            and: [
+              { href_matches: `${originUrl}/*` },
+              ...(speculationConfig.excludePatterns ?? []).map((pattern: string) => ({
+                not: { href_matches: `${originUrl}${pattern}` },
+              })),
+              { not: { selector_matches: "[rel~='nofollow']" } },
+            ],
+          },
+          eagerness: speculationConfig.eagerness ?? 'moderate',
+        },
+      ],
+    })} />
+  </head>
+  <body class:list={['min-h-screen flex flex-col', bodyClass]}>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-brand-600 focus:text-white focus:rounded-md focus:outline-none">
+      {i18nConfig.skipToContent}
+    </a>
+    <Header />
+    <main class="flex-1" id="main-content">
+      <slot />
+    </main>
+    <Footer />
+    <FloatingSidebar />
+  </body>
+</html>

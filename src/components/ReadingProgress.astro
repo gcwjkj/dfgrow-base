@@ -1,0 +1,55 @@
+---
+/**
+ * 阅读进度条组件
+ *
+ * 用法：在博客文章页面引入 <ReadingProgress /> 即可
+ * 顶部固定 3px 高的进度条，随滚动实时填充
+ * 仅在页面有足够滚动空间时显示
+ */
+---
+
+<div id="df-reading-progress" class="df-reading-progress" aria-hidden="true">
+  <div class="df-reading-progress__bar" id="df-reading-progress-bar"></div>
+</div>
+
+<style is:inline>
+  .df-reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 9500;
+    background: transparent;
+    pointer-events: none;
+  }
+  .df-reading-progress__bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-brand-600);
+    transition: width 0.1s linear;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var bar = document.getElementById('df-reading-progress-bar');
+    var container = document.getElementById('df-reading-progress');
+    if (!bar || !container) return;
+
+    function update() {
+      var scrollTop = window.scrollY;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) {
+        container.style.display = 'none';
+        return;
+      }
+      var pct = Math.min(100, Math.max(0, (scrollTop / docHeight) * 100));
+      bar.style.width = pct + '%';
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  })();
+</script>

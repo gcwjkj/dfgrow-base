@@ -1,0 +1,66 @@
+---
+/**
+ * 博客文章网格列表
+ *
+ * Props:
+ *   posts: Array<{ slug: string; data: BlogPostFrontmatter }> — 文章列表
+ *   readingTimes?: Record<string, number> — slug → 阅读时间（分钟）
+ *   showCover?: boolean — 是否展示封面图（默认 true）
+ *   emptyMessage?: string — 空数据提示
+ */
+import BlogCard from './BlogCard.astro';
+
+interface Props {
+  posts: Array<{
+    slug: string;
+    data: {
+      title: string;
+      description: string;
+      pubDate: Date | string;
+      tags?: string[];
+      cover?: string;
+      coverAlt?: string;
+      author?: string;
+    };
+  }>;
+  readingTimes?: Record<string, number>;
+  showCover?: boolean;
+  emptyMessage?: string;
+}
+
+const { posts, readingTimes, showCover = true, emptyMessage = '暂无文章' } = Astro.props;
+---
+
+{posts.length > 0 ? (
+  <div class="df-blog-grid">
+    {posts.map((post) => (
+      <BlogCard
+        post={post}
+        showCover={showCover}
+        readingTime={readingTimes?.[post.slug]}
+      />
+    ))}
+  </div>
+) : (
+  <div class="df-blog-empty">
+    <p>{emptyMessage}</p>
+  </div>
+)}
+
+<style is:inline>
+  .df-blog-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 640px) {
+    .df-blog-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .df-blog-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .df-blog-empty {
+    text-align: center; padding: 3rem 1.5rem;
+    color: var(--color-ink-500, #6b7280);
+  }
+</style>

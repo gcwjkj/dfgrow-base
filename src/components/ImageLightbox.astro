@@ -1,0 +1,269 @@
+---
+/**
+ * 图片放大预览组件
+ *
+ * 用法：给任意 <img> 加 data-zoomable 属性即可自动启用点击放大
+ * <img src="..." data-zoomable alt="..." />
+ *
+ * 无需手动初始化，组件全局自动监听。
+ * 支持 ESC 关闭、点击遮罩关闭、滚动缩放、拖拽移动。
+ */
+---
+
+<!-- Lightbox modal 容器 -->
+<div id="df-lightbox" class="df-lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="图片预览">
+  <button class="df-lightbox__close" aria-label="关闭预览" type="button">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+  <div class="df-lightbox__stage">
+    <img id="df-lightbox-img" src="" alt="" />
+  </div>
+  <div class="df-lightbox__hint">点击任意位置关闭 / ESC 关闭 / 滚轮缩放</div>
+</div>
+
+<style is:inline>
+  /* 可放大图片的视觉提示 */
+  [data-zoomable] {
+    cursor: zoom-in;
+    transition: opacity 0.2s ease;
+  }
+  [data-zoomable]:hover {
+    opacity: 0.88;
+  }
+
+  /* Lightbox 遮罩 */
+  .df-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .df-lightbox.is-open {
+    display: flex;
+    opacity: 1;
+  }
+
+  .df-lightbox__stage {
+    max-width: 92vw;
+    max-height: 88vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .df-lightbox__stage img {
+    max-width: 92vw;
+    max-height: 88vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+    transform-origin: center center;
+    transition: transform 0.15s ease;
+    will-change: transform;
+  }
+
+  .df-lightbox__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .df-lightbox__close:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  .df-lightbox__hint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  @media (max-width: 640px) {
+    .df-lightbox__hint {
+      font-size: 11px;
+      bottom: 12px;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var lightbox = document.getElementById('df-lightbox');
+    var lightboxImg = document.getElementById('df-lightbox-img');
+    if (!lightbox || !lightboxImg) return;
+
+    var scale = 1;
+    var translateX = 0;
+    var translateY = 0;
+    var isDragging = false;
+    var dragStartX = 0;
+    var dragStartY = 0;
+    var startTranslateX = 0;
+    var startTranslateY = 0;
+
+    function resetTransform() {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      lightboxImg.style.transform = '';
+    }
+
+    function open(src, alt) {
+      lightboxImg.src = src;
+      lightboxImg.alt = alt || '';
+      resetTransform();
+      lightbox.classList.add('is-open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function close() {
+      lightbox.classList.remove('is-open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      resetTransform();
+    }
+
+    // 事件委托：监听所有 [data-zoomable] 图片点击
+    document.addEventListener('click', function (e) {
+      var target = e.target;
+      if (target && target.tagName === 'IMG' && target.hasAttribute('data-zoomable')) {
+        e.preventDefault();
+        open(target.src, target.alt);
+      }
+    });
+
+    // 点击遮罩关闭
+    lightbox.addEventListener('click', function (e) {
+      if (e.target === lightbox || e.target.classList.contains('df-lightbox__stage')) {
+        close();
+      }
+    });
+
+    // 关闭按钮
+    var closeBtn = lightbox.querySelector('.df-lightbox__close');
+    if (closeBtn) closeBtn.addEventListener('click', close);
+
+    // ESC 关闭
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && lightbox.classList.contains('is-open')) {
+        close();
+      }
+      // 方向键平移
+      if (lightbox.classList.contains('is-open')) {
+        var step = 40;
+        if (e.key === 'ArrowLeft') translateX -= step;
+        if (e.key === 'ArrowRight') translateX += step;
+        if (e.key === 'ArrowUp') translateY -= step;
+        if (e.key === 'ArrowDown') translateY += step;
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+          e.preventDefault();
+          applyTransform();
+        }
+      }
+    });
+
+    // 滚轮缩放
+    lightbox.addEventListener('wheel', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+      e.preventDefault();
+      var delta = e.deltaY < 0 ? 0.15 : -0.15;
+      scale = Math.max(0.5, Math.min(5, scale + delta));
+      applyTransform();
+    }, { passive: false });
+
+    // 双指缩放（移动端）
+    var pinchInitialDist = 0;
+    var pinchInitialScale = 1;
+    lightbox.addEventListener('touchstart', function (e) {
+      if (e.touches.length === 2) {
+        pinchInitialDist = getDist(e.touches[0], e.touches[1]);
+        pinchInitialScale = scale;
+        isDragging = false;
+      } else if (e.touches.length === 1 && scale > 1) {
+        isDragging = true;
+        dragStartX = e.touches[0].clientX;
+        dragStartY = e.touches[0].clientY;
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+      }
+    }, { passive: true });
+
+    lightbox.addEventListener('touchmove', function (e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        var dist = getDist(e.touches[0], e.touches[1]);
+        scale = Math.max(0.5, Math.min(5, pinchInitialScale * (dist / pinchInitialDist)));
+        applyTransform();
+      } else if (isDragging && e.touches.length === 1) {
+        e.preventDefault();
+        translateX = startTranslateX + (e.touches[0].clientX - dragStartX);
+        translateY = startTranslateY + (e.touches[0].clientY - dragStartY);
+        applyTransform();
+      }
+    }, { passive: false });
+
+    lightbox.addEventListener('touchend', function () {
+      isDragging = false;
+    });
+
+    // 鼠标拖拽（桌面端放大后）
+    lightboxImg.addEventListener('mousedown', function (e) {
+      if (scale <= 1) return;
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      startTranslateX = translateX;
+      startTranslateY = translateY;
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      if (!isDragging || !lightbox.classList.contains('is-open')) return;
+      translateX = startTranslateX + (e.clientX - dragStartX);
+      translateY = startTranslateY + (e.clientY - dragStartY);
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', function () {
+      isDragging = false;
+    });
+
+    function applyTransform() {
+      lightboxImg.style.transform =
+        'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+    }
+
+    function getDist(t1, t2) {
+      var dx = t1.clientX - t2.clientX;
+      var dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+  })();
+</script>

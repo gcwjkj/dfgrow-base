@@ -1,0 +1,86 @@
+---
+/**
+ * 回到顶部按钮组件
+ *
+ * 用法：在任意页面末尾引入 <ScrollToTop /> 即可
+ * 滚动超过 600px 后自动显示，点击平滑滚动回顶部
+ * 尊重 prefers-reduced-motion
+ */
+---
+
+<button id="df-scroll-top" class="df-scroll-top" aria-label="回到顶部" type="button">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 16V4M4 10l6-6 6 6"/>
+  </svg>
+</button>
+
+<style is:inline>
+  .df-scroll-top {
+    position: fixed !important;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-brand-600);
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-brand-600) 30%, transparent);
+  }
+  .df-scroll-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .df-scroll-top:hover {
+    background: var(--color-brand-700);
+  }
+  .df-scroll-top:focus-visible {
+    outline: 2px solid var(--color-brand-400);
+    outline-offset: 3px;
+  }
+  @media (max-width: 768px) {
+    .df-scroll-top {
+      right: 16px;
+      bottom: 16px;
+      width: 44px;
+      height: 44px;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var btn = document.getElementById('df-scroll-top');
+    if (!btn) return;
+    var SHOW_THRESHOLD = 600;
+
+    function onScroll() {
+      if (window.scrollY > SHOW_THRESHOLD) {
+        btn.classList.add('is-visible');
+      } else {
+        btn.classList.remove('is-visible');
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    btn.addEventListener('click', function () {
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReduced ? 'auto' : 'smooth',
+      });
+    });
+  })();
+</script>

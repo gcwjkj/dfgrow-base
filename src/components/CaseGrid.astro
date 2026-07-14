@@ -1,0 +1,75 @@
+---
+/**
+ * 案例网格列表（通用）
+ *
+ * Props:
+ *   cases: Array<{ slug, title, industry?, summary?, metrics?, status?, href? }>
+ *   emptyMessage?: string
+ *   emptyCta?: { label: string; href: string }
+ */
+import CaseCard from './CaseCard.astro';
+
+interface CaseItem {
+  slug: string;
+  title: string;
+  industry?: string;
+  summary?: string;
+  metrics?: Array<{ label: string; value: string; unit?: string }>;
+  status?: string;
+  href?: string;
+}
+
+interface Props {
+  cases: CaseItem[];
+  emptyMessage?: string;
+  emptyCta?: { label: string; href: string };
+}
+
+const { cases, emptyMessage = '暂无案例', emptyCta } = Astro.props;
+---
+
+{cases.length > 0 ? (
+  <div class="df-case-grid">
+    {cases.map((c) => (
+      <CaseCard
+        slug={c.slug}
+        title={c.title}
+        industry={c.industry}
+        summary={c.summary}
+        metrics={c.metrics}
+        status={c.status}
+        href={c.href}
+      />
+    ))}
+  </div>
+) : (
+  <div class="df-case-empty">
+    <p class="df-case-empty__msg">{emptyMessage}</p>
+    {emptyCta && (
+      <a href={emptyCta.href} class="df-case-empty__cta">{emptyCta.label}</a>
+    )}
+  </div>
+)}
+
+<style is:inline>
+  .df-case-grid {
+    display: grid; grid-template-columns: 1fr; gap: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .df-case-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .df-case-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .df-case-empty { text-align: center; padding: 3rem 1.5rem; }
+  .df-case-empty__msg { color: var(--color-ink-500, #6b7280); font-size: 1rem; }
+  .df-case-empty__cta {
+    display: inline-block; margin-top: 1rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-btn, 8px);
+    background: var(--color-brand-600, #1f44d6);
+    color: #fff; font-weight: 500; text-decoration: none;
+    transition: background 0.2s ease;
+  }
+  .df-case-empty__cta:hover { background: var(--color-brand-700, #1a3ab8); }
+</style>

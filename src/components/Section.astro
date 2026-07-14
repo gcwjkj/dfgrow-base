@@ -1,0 +1,35 @@
+---
+interface Props {
+  as?: 'section' | 'div' | 'article';
+  bg?: 'white' | 'gray' | 'brand' | 'dark';
+  padding?: 'sm' | 'md' | 'lg';
+  class?: string;
+  id?: string;
+}
+
+const {
+  as: Tag = 'section',
+  bg = 'white',
+  padding = 'lg',
+  class: className,
+  id,
+} = Astro.props;
+
+const bgs = {
+  white: 'bg-white',
+  gray: 'bg-ink-50',
+  brand: 'bg-brand-50',
+  dark: 'bg-ink-950 text-ink-100',
+};
+const paddings = {
+  sm: 'py-10 md:py-14',
+  md: 'py-14 md:py-20',
+  lg: 'py-20 md:py-28',
+};
+---
+
+<Tag id={id} class:list={[bgs[bg], paddings[padding], className]}>
+  <div class="container-page">
+    <slot />
+  </div>
+</Tag>

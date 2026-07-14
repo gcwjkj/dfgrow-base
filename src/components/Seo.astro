@@ -1,0 +1,70 @@
+---
+import { siteConfig, seoConfig } from 'virtual:dfgrow/config';
+import { buildPageTitle, buildCanonical, type SeoMeta } from '../lib/seo.js';
+
+interface Props extends Partial<SeoMeta> {
+  pathname: string;
+}
+
+const {
+  title,
+  description = siteConfig.description,
+  pathname,
+  canonical,
+  ogImage = seoConfig.defaultOgImage ?? '/og-default.webp',
+  ogType = 'website',
+  noIndex = false,
+  keywords,
+  publishDate,
+  updatedDate,
+} = Astro.props;
+
+const fullTitle = buildPageTitle(title);
+const canonicalUrl = canonical ?? buildCanonical(pathname);
+const ogImageUrl = ogImage.startsWith('http')
+  ? ogImage
+  : `${siteConfig.url}${ogImage}`;
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<meta name="author" content={siteConfig.name} />
+<link rel="canonical" href={canonicalUrl} />
+{keywords && keywords.length > 0 && (
+  <meta name="keywords" content={keywords.join(', ')} />
+)}
+{noIndex
+  ? <meta name="robots" content="noindex, nofollow" />
+  : <meta name="robots" content="index, follow" />}
+
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content={siteConfig.name} />
+<meta property="og:locale" content={siteConfig.ogLocale} />
+
+{seoConfig.features?.twitterCard && (
+  <>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+  </>
+)}
+
+{publishDate && (
+  <meta property="article:published_time" content={publishDate.toISOString()} />
+)}
+{updatedDate && (
+  <meta property="article:modified_time" content={updatedDate.toISOString()} />
+)}
+{publishDate && (
+  <meta property="article:author" content={siteConfig.name} />
+)}
+{keywords && keywords.length > 0 && (
+  keywords.map(tag => <meta property="article:tag" content={tag} />)
+)}
