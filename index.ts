@@ -1,6 +1,6 @@
 // @gcwjkj/dfgrow-base — public API
 export { default as dfgrowBase } from './src/integration.js';
-export type { DfgrowConfig, SiteConfig, NavConfig, DfgrowTheme, AnalyticsConfig, SeoConfig, I18nConfig, CtaConfig, SpeculationConfig, ContentConfig, ComponentOverrides, FaqCategory, FaqItem, FaqCategoryMeta, BlogPostFrontmatter } from './src/types.js';
+export type { DfgrowConfig, SiteConfig, NavConfig, DfgrowTheme, AnalyticsConfig, SeoConfig, I18nConfig, CtaConfig, SpeculationConfig, ContentConfig, FooterConfig, GrowthPartnerConfig, ComponentOverrides, FaqCategory, FaqItem, FaqCategoryMeta, BlogPostFrontmatter } from './src/types.js';
 
 // CMS / Payload integration
 export { fetchBlogs, fetchCases, fetchFaqs, configurePayloadClient } from './src/lib/payload-client.js';

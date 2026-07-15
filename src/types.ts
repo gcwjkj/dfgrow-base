@@ -36,6 +36,16 @@ export interface NavItem {
     title: string;
     items: Array<{ label: string; href: string; description?: string }>;
   };
+
+  // ── 外链行为 ──
+
+  /**
+   * 是否作为外链在新标签页打开。
+   * - 未设置（undefined）：自动判断 —— href 以 http:// 或 https:// 开头时视为外链
+   * - `true`：强制新标签页打开
+   * - `false`：强制当前页跳转（即使是绝对 URL）
+   */
+  external?: boolean;
 }
 
 export interface SiteConfig {
@@ -287,6 +297,74 @@ export interface ComponentOverrides {
   layout?: string;
 }
 
+/**
+ * 增长合作伙伴卡片配置 — 驱动 GrowthPartnerCard 组件。
+ *
+ * 通过 dfgrow.config.ts 中的 `growthPartner` 字段注入，使所有 UTM 参数
+ * 与文案均可按客户/项目维度配置，避免硬编码。
+ *
+ * 例：
+ * ```ts
+ * growthPartner: {
+ *   utm: { source: 'myclient', medium: 'referral' },
+ *   primaryHref: 'https://dfgrow.com/',
+ *   secondaryHref: 'https://dfgrow.com/services',
+ * }
+ * ```
+ */
+export interface GrowthPartnerConfig {
+  /**
+   * UTM 跟踪参数。
+   * - `source`：流量来源标识，默认 'sczhiyu'
+   * - `medium`：流量媒介，默认 'referral'（GrowthPartnerCard 场景）
+   * - `footerMedium`：页脚链接专用 medium，默认 'footer'
+   * - `campaignPrefix`：campaign 前缀，最终拼接为 `${campaignPrefix}_${placement}_partner_promo`，
+   *   默认前缀为空（即 campaign 为 `${placement}_partner_promo`）。
+   *   若需保留旧行为 campaign='about_partner_promo'，可不配置此项。
+   */
+  utm?: {
+    source?: string;
+    medium?: string;
+    footerMedium?: string;
+    campaignPrefix?: string;
+  };
+  /** 主推链接基础地址（不含 UTM，组件会自动拼接），默认 'https://dfgrow.com/' */
+  primaryHref?: string;
+  /** 次推链接基础地址（不含 UTM），默认 'https://dfgrow.com/services' */
+  secondaryHref?: string;
+  /** about 场景次推链接覆盖，默认复用 secondaryHref */
+  aboutSecondaryHref?: string;
+  /** cases 场景次推链接覆盖，默认 'https://dfgrow.com/method' */
+  casesSecondaryHref?: string;
+  /** 主推按钮文案，默认 '了解登峰增长' */
+  primaryLabel?: string;
+  /** 次推按钮文案，默认 '查看方法与服务' */
+  secondaryLabel?: string;
+  /**
+   * 是否在链接上追加 UTM 参数。
+   * 设为 false 可完全关闭 UTM 拼接，仅使用原始链接。默认 true。
+   */
+  appendUtm?: boolean;
+
+  // ── 页脚「官网由登峰增长搭建」致谢区块 ──
+
+  /**
+   * 是否在页脚展示「官网由登峰增长搭建」致谢区块。
+   * - `true`：展示（需客户同意）
+   * - `false`：完全不渲染该区块
+   * 默认 false，避免在客户未授权时默认展示。
+   */
+  footerCredit?: boolean;
+  /** 页脚致谢链接的基础地址（不含 UTM），默认复用 primaryHref */
+  footerCreditHref?: string;
+  /** 页脚致谢链接文字，默认 '登峰增长' */
+  footerCreditLabel?: string;
+  /** 页脚致谢前缀文案，默认 '官网由' */
+  footerCreditPrefix?: string;
+  /** 页脚致谢后缀文案，默认 '搭建及提供SEO/GEO优化支持。' */
+  footerCreditSuffix?: string;
+}
+
 export interface DfgrowConfig {
   site: SiteConfig;
   nav: NavConfig;
@@ -299,6 +377,7 @@ export interface DfgrowConfig {
   content?: ContentConfig;
   footer?: FooterConfig;
   floatingSidebar?: FloatingSidebarConfig;
+  growthPartner?: GrowthPartnerConfig;
   overrides?: ComponentOverrides;
 }
 

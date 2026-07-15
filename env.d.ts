@@ -13,4 +13,5 @@ declare module 'virtual:dfgrow/config' {
   export const speculationConfig: NonNullable<DfgrowConfig['speculation']>;
   export const footerConfig: NonNullable<DfgrowConfig['footer']>;
   export const floatingSidebarConfig: NonNullable<DfgrowConfig['floatingSidebar']>;
+  export const growthPartnerConfig: NonNullable<DfgrowConfig['growthPartner']>;
 }

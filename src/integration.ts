@@ -56,7 +56,8 @@ export default function dfgrowBase(userOptions: DfgrowBaseOptions = {}): AstroIn
   export const ctaConfig: NonNullable<DfgrowConfig['cta']>;
   export const speculationConfig: NonNullable<DfgrowConfig['speculation']>;
   export const footerConfig: NonNullable<DfgrowConfig['footer']>;
-  export const floatingSidebarConfig: DfgrowConfig['floatingSidebar'];
+  export const floatingSidebarConfig: NonNullable<DfgrowConfig['floatingSidebar']>;
+  export const growthPartnerConfig: NonNullable<DfgrowConfig['growthPartner']>;
 }
 `;
         if (!existsSync(typesFile) || readFileSync(typesFile, 'utf8') !== typesContent) {

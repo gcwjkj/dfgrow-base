@@ -14,6 +14,7 @@ export function generateConfigModule(config: DfgrowConfig): string {
   const speculation = JSON.stringify(config.speculation ?? {});
   const footer = JSON.stringify(config.footer ?? {});
   const floatingSidebar = JSON.stringify(config.floatingSidebar ?? null);
+  const growthPartner = JSON.stringify(config.growthPartner ?? {});
 
   return `
 export const siteConfig = /** @type {import('@gcwjkj/dfgrow-base/types').SiteConfig} */ (${site});
@@ -25,7 +26,8 @@ export const ctaConfig = /** @type {import('@gcwjkj/dfgrow-base/types').CtaConfi
 export const speculationConfig = /** @type {import('@gcwjkj/dfgrow-base/types').SpeculationConfig} */ (${speculation});
 export const footerConfig = /** @type {import('@gcwjkj/dfgrow-base/types').FooterConfig} */ (${footer});
 export const floatingSidebarConfig = /** @type {import('@gcwjkj/dfgrow-base/types').FloatingSidebarConfig | null} */ (${floatingSidebar});
-const config = { site: siteConfig, nav: navConfig, theme: themeConfig, seo: seoConfig, i18n: i18nConfig, cta: ctaConfig, speculation: speculationConfig, footer: footerConfig, floatingSidebar: floatingSidebarConfig };
+export const growthPartnerConfig = /** @type {import('@gcwjkj/dfgrow-base/types').GrowthPartnerConfig} */ (${growthPartner});
+const config = { site: siteConfig, nav: navConfig, theme: themeConfig, seo: seoConfig, i18n: i18nConfig, cta: ctaConfig, speculation: speculationConfig, footer: footerConfig, floatingSidebar: floatingSidebarConfig, growthPartner: growthPartnerConfig };
 export default config;
 `.trim();
 }

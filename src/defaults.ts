@@ -61,6 +61,31 @@ export const defaultFooter: NonNullable<DfgrowConfig['footer']> = {
 };
 
 /**
+ * 默认增长合作伙伴卡片配置。
+ * - utm.source 默认 'sczhiyu'，保持向后兼容
+ * - primaryHref / secondaryHref 默认指向 dfgrow.com
+ * - casesSecondaryHref 默认指向 /method（与方法页保持一致）
+ * - footerCredit 默认 false：客户未显式同意时不展示页脚致谢区块
+ */
+export const defaultGrowthPartner: NonNullable<DfgrowConfig['growthPartner']> = {
+  utm: {
+    source: 'sczhiyu',
+    medium: 'referral',
+    footerMedium: 'footer',
+  },
+  primaryHref: 'https://dfgrow.com/',
+  secondaryHref: 'https://dfgrow.com/services',
+  casesSecondaryHref: 'https://dfgrow.com/method',
+  primaryLabel: '了解登峰增长',
+  secondaryLabel: '查看方法与服务',
+  appendUtm: true,
+  footerCredit: false,
+  footerCreditLabel: '登峰增长',
+  footerCreditPrefix: '官网由',
+  footerCreditSuffix: '搭建及提供SEO/GEO优化支持。',
+};
+
+/**
  * 判断是否启用了任一分析工具。
  * Analytics.astro 从 PUBLIC_* 环境变量加载分析脚本，故以此为准。
  * 构建期通过 process.env 判断（用于校验/warn）；运行期组件通过 import.meta.env 判断。
@@ -115,6 +140,7 @@ export function resolveConfig(userConfig: Partial<DfgrowConfig>): DfgrowConfig {
     footer,
     analytics: userConfig.analytics,
     floatingSidebar: userConfig.floatingSidebar,
+    growthPartner: deepMerge(defaultGrowthPartner, userConfig.growthPartner ?? {}),
     overrides: userConfig.overrides,
   };
 }

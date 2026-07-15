@@ -1,5 +1,5 @@
 ---
-import { siteConfig, navConfig, i18nConfig, seoConfig, footerConfig } from 'virtual:dfgrow/config';
+import { siteConfig, navConfig, i18nConfig, seoConfig, footerConfig, growthPartnerConfig } from 'virtual:dfgrow/config';
 const year = new Date().getFullYear();
 const features = seoConfig.features ?? {};
 
@@ -21,6 +21,47 @@ const contactLayout = footerConfig.contactLayout ?? 'vertical';
 const contact = siteConfig.contact;
 const socialLinks = footerConfig.socialLinks ?? [];
 const qrCards = footerConfig.qrCards ?? [];
+
+/**
+ * 判断导航项是否应作为外链在新标签页打开。
+ * - item.external === true：强制外链
+ * - item.external === false：强制内链（即使 href 是绝对 URL）
+ * - undefined：自动判断 —— http:// 或 https:// 开头视为外链
+ */
+function isExternalLink(item: { href?: string; external?: boolean }): boolean {
+  if (item.external === true) return true;
+  if (item.external === false) return false;
+  return /^https?:\/\//i.test(item.href ?? '');
+}
+
+// ── 页脚致谢区块（官网由登峰增长搭建）──
+// 仅当客户在 dfgrow.config.ts 中显式设置 growthPartner.footerCredit = true 时展示
+const showFooterCredit = growthPartnerConfig.footerCredit === true;
+const creditLabel = growthPartnerConfig.footerCreditLabel ?? '登峰增长';
+const creditPrefix = growthPartnerConfig.footerCreditPrefix ?? '官网由';
+const creditSuffix = growthPartnerConfig.footerCreditSuffix ?? '搭建及提供SEO/GEO优化支持。';
+
+const creditBaseHref = growthPartnerConfig.footerCreditHref ?? growthPartnerConfig.primaryHref ?? 'https://dfgrow.com/';
+const creditAppendUtm = growthPartnerConfig.appendUtm !== false;
+const creditUtmSource = growthPartnerConfig.utm?.source ?? 'sczhiyu';
+const creditUtmMedium = growthPartnerConfig.utm?.footerMedium ?? 'footer';
+const creditUtmCampaign = 'partner_promo';
+
+function buildCreditHref(baseUrl: string): string {
+  if (!creditAppendUtm) return baseUrl;
+  try {
+    const url = new URL(baseUrl);
+    const sp = url.searchParams;
+    if (!sp.get('utm_source')) sp.set('utm_source', creditUtmSource);
+    if (!sp.get('utm_medium')) sp.set('utm_medium', creditUtmMedium);
+    if (!sp.get('utm_campaign')) sp.set('utm_campaign', creditUtmCampaign);
+    return url.toString();
+  } catch {
+    const sep = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${sep}utm_source=${encodeURIComponent(creditUtmSource)}&utm_medium=${encodeURIComponent(creditUtmMedium)}&utm_campaign=${encodeURIComponent(creditUtmCampaign)}`;
+  }
+}
+const creditHref = buildCreditHref(creditBaseHref);
 
 // 内置图标 SVG path
 const builtinIcons: Record<string, string> = {
@@ -186,9 +227,21 @@ function resolveIcon(link: { name: string; icon?: string }): { type: 'svg' | 'im
         <div>
           <div class="text-white text-sm font-semibold mb-4">{col.label}</div>
           <ul class="space-y-2 text-sm">
-            {col.items.map((item) => (
-              <li><a href={item.href} class="text-ink-300 hover:text-white no-underline">{item.label}</a></li>
-            ))}
+            {col.items.map((item) => {
+              const isExt = isExternalLink(item);
+              return (
+                <li>
+                  <a
+                    href={item.href}
+                    target={isExt ? '_blank' : undefined}
+                    rel={isExt ? 'noopener noreferrer' : undefined}
+                    class="text-ink-300 hover:text-white no-underline"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
@@ -198,6 +251,20 @@ function resolveIcon(link: { name: string; icon?: string }): { type: 'svg' | 'im
 
     <div class="mt-8 py-2 border-t border-ink-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-ink-300">
       <div>&copy; {year > 2026 ? '2026 - ' + year : year } {siteConfig.legalEntity.name}. {i18nConfig.copyright}</div>
+      {showFooterCredit && (
+        <div class="text-ink-300 leading-relaxed">
+          {creditPrefix}
+          <a
+            href={creditHref}
+            target="_blank"
+            rel="sponsored noopener noreferrer"
+            class="text-white hover:text-brand-200 no-underline color-brand-200"
+          >
+          {creditLabel}
+          </a>
+          {creditSuffix}
+        </div>
+      )}
       <div class="flex items-center gap-4">
         {showLegalLinks && (
           <>
