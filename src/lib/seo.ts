@@ -203,8 +203,9 @@ export function getProfessionalServiceSchema() {
 export function getServiceSchema(args: {
   name: string;
   description: string;
-  url: string;
+  url?: string;
   price?: string;
+  priceCurrency?: string;
   serviceType: string;
 }) {
   const schema: Record<string, unknown> = {
@@ -229,7 +230,7 @@ export function getServiceSchema(args: {
     schema.offers = {
       '@type': 'Offer',
       price: args.price.replace(/[¥$€£]/g, '').replace(/,/g, ''),
-      priceCurrency: siteConfig.priceCurrency,
+      priceCurrency: args.priceCurrency ?? siteConfig.priceCurrency,
     };
   }
 
@@ -296,15 +297,16 @@ export function getItemListSchema(args: {
 }
 
 export function getReviewSchema(args: {
-  name: string;
+  name?: string;
   reviewBody: string;
   author: string;
   itemReviewed: string;
+  ratingValue?: number;
 }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Review',
-    name: args.name,
+    ...(args.name && { name: args.name }),
     reviewBody: args.reviewBody,
     author: {
       '@type': 'Person',
@@ -319,6 +321,14 @@ export function getReviewSchema(args: {
         url: siteConfig.url,
       },
     },
+    ...(args.ratingValue !== undefined && {
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: args.ratingValue,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }),
   };
 }
 

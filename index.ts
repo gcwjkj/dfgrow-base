@@ -7,3 +7,9 @@ export { fetchBlogs, fetchCases, fetchFaqs, configurePayloadClient } from './src
 export { payloadBlogLoader } from './src/lib/payload-loader.js';
 export type { PayloadBlogEntry, PayloadCaseEntry, PayloadFaqEntry, PayloadClientOptions } from './src/lib/payload-client.js';
 export type { PayloadBlogLoaderOptions } from './src/lib/payload-loader.js';
+
+// Blog content collection helpers
+export { createBlogCollection } from './src/lib/blog-collection.js';
+export type { CreateBlogCollectionOptions } from './src/lib/blog-collection.js';
+export { getBlogPosts, renderPost } from './src/lib/blog.js';
+export type { BlogPost } from './src/lib/blog.js';

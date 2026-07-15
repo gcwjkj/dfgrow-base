@@ -27,6 +27,7 @@ export function blogPostSchema(z: any) {
     draft: z.boolean().default(false),
     author: z.string().default('登峰增长'),
     locale: z.string().default('zh'),
+    featured: z.boolean().default(false),
     faq: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
   });
 }

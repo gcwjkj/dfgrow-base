@@ -420,6 +420,7 @@ export interface BlogPostFrontmatter {
   draft?: boolean;
   author?: string;
   locale?: string;
+  featured?: boolean;
   faq?: Array<{ question: string; answer: string }>;
 }
 
