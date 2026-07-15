@@ -1,6 +1,6 @@
 {
   "name": "@gcwjkj/dfgrow-base",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Dengfeng Growth — reusable Astro SEO/GEO/performance infrastructure for client websites",
   "type": "module",
   "main": "./index.ts",
