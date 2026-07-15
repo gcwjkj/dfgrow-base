@@ -345,6 +345,12 @@ export interface GrowthPartnerConfig {
    * 设为 false 可完全关闭 UTM 拼接，仅使用原始链接。默认 true。
    */
   appendUtm?: boolean;
+  /**
+   * 卡片最外层背景色（CSS 颜色值，如 '#0a0a0a'、'rgb(10,10,10)'）。
+   * 用于适配深色等特殊主题的客户网站。
+   * 不配置时保持默认（浅蓝渐变）背景。
+   */
+  backgroundColor?: string;
 
   // ── 页脚「官网由登峰增长搭建」致谢区块 ──
 
