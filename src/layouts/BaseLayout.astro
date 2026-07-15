@@ -13,7 +13,7 @@ import { generateBrandScale } from '../lib/generate-brand-scale.mjs';
 
 // Auto-generate brand color scale from brandColor config
 // This eliminates the need for manual --df-brand-* CSS overrides
-const brandScale = generateBrandScale(themeConfig.brandColor);
+const brandScale = generateBrandScale(themeConfig.brandColor ?? '#1f44d6');
 const brandCSSVars = Object.entries(brandScale)
   .map(([k, v]) => `--df-brand-${k.padEnd(3)}:${v}`)
   .join(';');
@@ -21,10 +21,11 @@ const brandCSSVars = Object.entries(brandScale)
 interface Props extends Partial<SeoMeta> {
   schemas?: Array<Record<string, unknown>>;
   bodyClass?: string;
+  pathname?: string;
 }
 
-const { schemas = [], bodyClass, ...seo } = Astro.props;
-const pathname = Astro.url.pathname;
+const { schemas = [], bodyClass, pathname: explicitPathname, ...seo } = Astro.props;
+const pathname = explicitPathname ?? Astro.url.pathname;
 const isProd = import.meta.env.PROD;
 const ga4Id = import.meta.env.PUBLIC_GA4_ID;
 const clarityId = import.meta.env.PUBLIC_CLARITY_ID;
