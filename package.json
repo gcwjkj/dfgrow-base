@@ -44,7 +44,9 @@
     "schema-org",
     "structured-data",
     "sitemap",
-    "llms-txt"
+    "llms-txt",
+    "baidu-t7",
+    "css-compat"
   ],
   "license": "MIT",
   "author": "曹进国 <hi@gcwjkj.com> (https://dfgrow.com)",

@@ -160,6 +160,13 @@ const breadcrumb = getBreadcrumbSchema([
 - Baidu `applicable-device=pc,mobile` mobile adaptation
 - ICP registration number display
 - Baidu Tongji analytics integration
+- **Baidu T7 / 老内核 CSS 兼容降级**（v0.8.0+，默认启用）：自动剥离 Tailwind v4 的 `@layer` 包装并用 lightningcss 降级 `oklch()`、`color-mix()`、`margin-inline` 等现代 CSS 特性，解决手机百度上 Tailwind 工具类整体失效（图标变大、间距消失、布局错乱）问题。可通过 `dfgrowBase({ legacyCssTranspile: { enabled: false } })` 关闭，或自定义 targets：
+  ```ts
+  dfgrowBase({
+    legacyCssTranspile: { enabled: { chrome: 70, safari: 13, firefox: 70 } },
+  })
+  ```
+  > 依赖 `lightningcss`（Tailwind v4 已内置）。仅作用于生产构建，dev 模式不生效。
 
 ### Footer & Legal Links
 Privacy/Terms links (`/privacy`, `/terms`) render in the footer by default and are **compliance-gated**:

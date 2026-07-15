@@ -12,10 +12,22 @@ import { generateRobotsTxt } from './lib/generate-robots.mjs';
 import { generateServiceWorker } from './lib/generate-sw.mjs';
 import { generateManifest } from './lib/generate-manifest.mjs';
 import { generateRssFeed } from './lib/generate-rss.mjs';
+import {
+  createCssLegacyTranspilePlugin,
+  type LegacyCssTranspileOptions,
+} from './vite/css-legacy-transpile.js';
 
 export interface DfgrowBaseOptions extends Partial<DfgrowConfig> {
   /** 客户配置文件路径（相对于项目根），默认 'dfgrow.config' */
   configPath?: string;
+  /**
+   * 百度 T7 / 老内核 CSS 兼容降级。
+   * - 默认启用（true）：剥离 @layer 包装 + lightningcss 降级 oklch/color-mix 等
+   * - false：关闭
+   * - 对象：自定义 targets（如 { chrome: 70, safari: 13 }）
+   * 默认 true。详见 src/vite/css-legacy-transpile.ts。
+   */
+  legacyCssTranspile?: LegacyCssTranspileOptions;
 }
 
 export default function dfgrowBase(userOptions: DfgrowBaseOptions = {}): AstroIntegration {
@@ -71,7 +83,8 @@ export default function dfgrowBase(userOptions: DfgrowBaseOptions = {}): AstroIn
 
         resolved = resolveConfig(merged);
 
-        // 注册虚拟模块
+        // 注册虚拟模块 + 百度 T7 CSS 兼容降级插件
+        const legacyCssOpts = userOptions.legacyCssTranspile ?? { enabled: true };
         updateConfig({
           vite: {
             plugins: [
@@ -89,6 +102,8 @@ export default function dfgrowBase(userOptions: DfgrowBaseOptions = {}): AstroIn
                   }
                 },
               },
+              // 百度 T7 / 老内核兼容：剥离 @layer 包装 + lightningcss 降级现代 CSS
+              createCssLegacyTranspilePlugin(legacyCssOpts),
             ],
           },
         });
