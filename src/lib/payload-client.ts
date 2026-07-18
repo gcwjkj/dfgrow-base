@@ -21,8 +21,8 @@ export interface PayloadBlogEntry {
   author: string
   draft: boolean
   locale: string
-  section: string
-  sectionLabel: string
+  section: string[]
+  sectionLabel: string[]
   tags: string[]
   cover?: string
   coverAlt?: string
@@ -269,6 +269,42 @@ export function configurePayloadClient(opts: PayloadClientOptions) {
   _configOverride = opts
 }
 
+/**
+ * 将 section 字段（hasMany relationship）规范化为 slug 数组 + label 数组。
+ * depth=2 时 section 是对象数组 [{ id, name, slug, ... }]，
+ * depth=1 时是 ID 数组 ["id1", "id2"]，
+ * depth=0 时是 null/undefined。
+ */
+function normalizeSections(section: any): { sections: string[]; sectionLabels: string[] } {
+  if (!section) return { sections: [], sectionLabels: [] }
+
+  if (Array.isArray(section)) {
+    if (section.length === 0) return { sections: [], sectionLabels: [] }
+    return section.reduce(
+      (acc: { sections: string[]; sectionLabels: string[] }, item: any) => {
+        if (typeof item === 'object' && item !== null) {
+          acc.sections.push(item.slug || item.id || 'search')
+          acc.sectionLabels.push(item.name || '')
+        } else {
+          acc.sections.push(String(item))
+          acc.sectionLabels.push('')
+        }
+        return acc
+      },
+      { sections: [], sectionLabels: [] },
+    )
+  }
+
+  if (typeof section === 'object' && section !== null) {
+    return {
+      sections: [section.slug || section.id || 'search'],
+      sectionLabels: [section.name || ''],
+    }
+  }
+
+  return { sections: [String(section)], sectionLabels: [] }
+}
+
 /** Parse raw Payload blog doc → PayloadBlogEntry */
 function parseBlog(doc: any): PayloadBlogEntry {
   return {
@@ -282,8 +318,8 @@ function parseBlog(doc: any): PayloadBlogEntry {
     author: doc.author || '登峰增长',
     draft: doc.draft ?? false,
     locale: doc.locale || 'zh',
-    section: doc.section || 'search',
-    sectionLabel: doc.sectionLabel || '',
+    section: normalizeSections(doc.section).sections,
+    sectionLabel: normalizeSections(doc.section).sectionLabels,
     tags: doc.tags?.map((t: any) => (typeof t === 'string' ? t : t.tag)) || [],
     cover: doc.cover && typeof doc.cover === 'object' ? (doc.cover as any).url : undefined,
     coverAlt: doc.coverAlt || undefined,

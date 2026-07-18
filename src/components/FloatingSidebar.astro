@@ -297,7 +297,7 @@ function resolveIcon(name: string): { type: 'svg' | 'stroke'; value: string } {
     z-index: 8002;
     box-shadow: 0 4px 20px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04);
   }
-  .df-float-tip::after {
+   .df-float-tip::after {
     content: '';
     position: absolute;
     right: -7px;
@@ -306,8 +306,6 @@ function resolveIcon(name: string): { type: 'svg' | 'stroke'; value: string } {
     width: 12px;
     height: 12px;
     background: #fff;
-    border-right: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
   }
   .df-float-tip.is-visible {
     opacity: 1;
