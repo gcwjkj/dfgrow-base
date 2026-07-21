@@ -65,11 +65,11 @@ if (ga4Id) {
   cspConnectSrc.push("https://www.google-analytics.com");
   cspFormAction.push("https://www.googletagmanager.com");
 }
-// Clarity：主脚本 www.clarity.ms + 运行时脚本 scripts.clarity.ms
+// Clarity：主脚本 www.clarity.ms + 运行时脚本 scripts.clarity.ms + 数据上报 n.clarity.ms
 if (clarityId) {
   cspScriptSrc.push("https://www.clarity.ms", "https://scripts.clarity.ms");
   cspImgSrc.push("https://www.clarity.ms");
-  cspConnectSrc.push("https://www.clarity.ms");
+  cspConnectSrc.push("https://www.clarity.ms", "https://n.clarity.ms");
 }
 const csp = `default-src 'self'; script-src ${cspScriptSrc.join(' ')}; style-src ${cspStyleSrc.join(' ')}; img-src ${cspImgSrc.join(' ')}; font-src ${cspFontSrc.join(' ')}; connect-src ${cspConnectSrc.join(' ')}; frame-src ${cspFrameSrc.length ? cspFrameSrc.join(' ') : "'none'"}; object-src 'none'; base-uri 'self'; form-action ${cspFormAction.join(' ')};`;
 
