@@ -45,21 +45,29 @@ const originUrl = new URL(siteConfig.url).origin;
 // 动态构建 CSP：仅当对应分析工具已配置时才引入其域名，避免国内用户产生无效 DNS 解析
 // 项目可通过 dfgrow.config.ts 的 security.csp 追加自定义域名，无需修改基座包源码
 const cspCustom = securityConfig.csp ?? {};
-const cspScriptSrc = ["'self'", "'unsafe-inline'", "https://hm.baidu.com", ...(cspCustom.scriptSrc ?? [])];
+const cspScriptSrc = ["'self'", "'unsafe-inline'", ...(cspCustom.scriptSrc ?? [])];
 const cspImgSrc = ["'self'", "data:", ...(cspCustom.imgSrc ?? [])];
 const cspStyleSrc = ["'self'", "'unsafe-inline'", ...(cspCustom.styleSrc ?? [])];
-const cspConnectSrc = ["'self'", "https://hm.baidu.com", "https://api.indexnow.org", "https://ssl.bing.com", ...(cspCustom.connectSrc ?? [])];
+const cspConnectSrc = ["'self'", "https://api.indexnow.org", "https://ssl.bing.com", ...(cspCustom.connectSrc ?? [])];
 const cspFontSrc = ["'self'", ...(cspCustom.fontSrc ?? [])];
 const cspFrameSrc = [...(cspCustom.frameSrc ?? [])];
 const cspFormAction = ["'self'", ...(cspCustom.formAction ?? [])];
+
+// 百度统计：hm.js 脚本 + hm.gif 图片上报 + connect 上报
+if (baiduId) {
+  cspScriptSrc.push("https://hm.baidu.com");
+  cspImgSrc.push("https://hm.baidu.com");
+  cspConnectSrc.push("https://hm.baidu.com");
+}
 if (ga4Id) {
   cspScriptSrc.push("https://www.googletagmanager.com");
   cspImgSrc.push("https://www.googletagmanager.com");
   cspConnectSrc.push("https://www.google-analytics.com");
   cspFormAction.push("https://www.googletagmanager.com");
 }
+// Clarity：主脚本 www.clarity.ms + 运行时脚本 scripts.clarity.ms
 if (clarityId) {
-  cspScriptSrc.push("https://www.clarity.ms");
+  cspScriptSrc.push("https://www.clarity.ms", "https://scripts.clarity.ms");
   cspImgSrc.push("https://www.clarity.ms");
   cspConnectSrc.push("https://www.clarity.ms");
 }
