@@ -8,7 +8,7 @@ import Seo from '../components/Seo.astro';
 import Analytics from '../components/Analytics.astro';
 import FloatingSidebar from '../components/FloatingSidebar.astro';
 import { getOrganizationSchema, getWebSiteSchema, getPersonSchema, getSpeakableSchema, getSiteNavigationElementSchema, buildCanonical, cleanPathname, type SeoMeta } from '../lib/seo.js';
-import { siteConfig, themeConfig, seoConfig, i18nConfig, speculationConfig } from 'virtual:dfgrow/config';
+import { siteConfig, themeConfig, seoConfig, i18nConfig, speculationConfig, securityConfig } from 'virtual:dfgrow/config';
 import { generateBrandScale } from '../lib/generate-brand-scale.mjs';
 
 // Auto-generate brand color scale from brandColor config
@@ -43,10 +43,15 @@ const features = seoConfig.features ?? {};
 const originUrl = new URL(siteConfig.url).origin;
 
 // 动态构建 CSP：仅当对应分析工具已配置时才引入其域名，避免国内用户产生无效 DNS 解析
-const cspScriptSrc = ["'self'", "'unsafe-inline'", "https://hm.baidu.com"];
-const cspImgSrc = ["'self'", "data:"];
-const cspConnectSrc = ["'self'", "https://hm.baidu.com", "https://api.indexnow.org", "https://ssl.bing.com"];
-const cspFormAction = ["'self'"];
+// 项目可通过 dfgrow.config.ts 的 security.csp 追加自定义域名，无需修改基座包源码
+const cspCustom = securityConfig.csp ?? {};
+const cspScriptSrc = ["'self'", "'unsafe-inline'", "https://hm.baidu.com", ...(cspCustom.scriptSrc ?? [])];
+const cspImgSrc = ["'self'", "data:", ...(cspCustom.imgSrc ?? [])];
+const cspStyleSrc = ["'self'", "'unsafe-inline'", ...(cspCustom.styleSrc ?? [])];
+const cspConnectSrc = ["'self'", "https://hm.baidu.com", "https://api.indexnow.org", "https://ssl.bing.com", ...(cspCustom.connectSrc ?? [])];
+const cspFontSrc = ["'self'", ...(cspCustom.fontSrc ?? [])];
+const cspFrameSrc = [...(cspCustom.frameSrc ?? [])];
+const cspFormAction = ["'self'", ...(cspCustom.formAction ?? [])];
 if (ga4Id) {
   cspScriptSrc.push("https://www.googletagmanager.com");
   cspImgSrc.push("https://www.googletagmanager.com");
@@ -58,7 +63,7 @@ if (clarityId) {
   cspImgSrc.push("https://www.clarity.ms");
   cspConnectSrc.push("https://www.clarity.ms");
 }
-const csp = `default-src 'self'; script-src ${cspScriptSrc.join(' ')}; style-src 'self' 'unsafe-inline'; img-src ${cspImgSrc.join(' ')}; connect-src ${cspConnectSrc.join(' ')}; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action ${cspFormAction.join(' ')};`;
+const csp = `default-src 'self'; script-src ${cspScriptSrc.join(' ')}; style-src ${cspStyleSrc.join(' ')}; img-src ${cspImgSrc.join(' ')}; font-src ${cspFontSrc.join(' ')}; connect-src ${cspConnectSrc.join(' ')}; frame-src ${cspFrameSrc.length ? cspFrameSrc.join(' ') : "'none'"}; object-src 'none'; base-uri 'self'; form-action ${cspFormAction.join(' ')};`;
 
 // 验证码：仅在环境变量存在时输出，避免空 meta 标签和硬编码 fallback
 const baiduVerification = import.meta.env.PUBLIC_BAIDU_VERIFICATION_CODE;

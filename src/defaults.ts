@@ -47,6 +47,11 @@ export const defaultSpeculation: NonNullable<DfgrowConfig['speculation']> = {
   eagerness: 'moderate',
 };
 
+/** 默认安全策略（不追加任何自定义 CSP 来源，等于基座包内置 CSP） */
+export const defaultSecurity: NonNullable<DfgrowConfig['security']> = {
+  csp: {},
+};
+
 /** 默认内容目录 */
 export const defaultContent: NonNullable<DfgrowConfig['content']> = {
   dataDir: 'src/data',
@@ -136,6 +141,7 @@ export function resolveConfig(userConfig: Partial<DfgrowConfig>): DfgrowConfig {
     i18n,
     cta: { ...defaultCta, ...userConfig.cta },
     speculation: { ...defaultSpeculation, ...userConfig.speculation },
+    security: { ...defaultSecurity, ...userConfig.security },
     content: { ...defaultContent, ...userConfig.content },
     footer,
     analytics: userConfig.analytics,

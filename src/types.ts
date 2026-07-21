@@ -176,6 +176,46 @@ export interface SpeculationConfig {
   eagerness?: 'immediate' | 'eager' | 'moderate' | 'conservative';
 }
 
+/**
+ * 安全策略配置 — 控制 BaseLayout 输出的 Content-Security-Policy 头。
+ *
+ * 基座包内置了一套合理的默认 CSP（仅允许同源 + 常见分析工具域名），
+ * 各项目可通过此配置追加自定义域名，避免硬编码到基座包源码中。
+ *
+ * 例：
+ * ```ts
+ * security: {
+ *   csp: {
+ *     imgSrc: ['https://cms.gcwjkj.com'],
+ *     connectSrc: ['https://api.example.com'],
+ *   }
+ * }
+ * ```
+ */
+export interface SecurityConfig {
+  /**
+   * CSP 自定义补充域名。
+   * 每项都是 CSP 指令关键字后面的额外来源，会追加到基座包内置的默认列表后面。
+   * 不配置或留空时，CSP 完全等于基座包内置默认值（向后兼容）。
+   */
+  csp?: {
+    /** 追加到 img-src 指令的额外来源（如 CMS 图片域名） */
+    imgSrc?: string[];
+    /** 追加到 script-src 指令的额外来源 */
+    scriptSrc?: string[];
+    /** 追加到 style-src 指令的额外来源 */
+    styleSrc?: string[];
+    /** 追加到 connect-src 指令的额外来源 */
+    connectSrc?: string[];
+    /** 追加到 font-src 指令的额外来源 */
+    fontSrc?: string[];
+    /** 追加到 frame-src 指令的额外来源 */
+    frameSrc?: string[];
+    /** 追加到 form-action 指令的额外来源 */
+    formAction?: string[];
+  };
+}
+
 export interface ContentConfig {
   dataDir?: string;
   contentDir?: string;
@@ -380,6 +420,7 @@ export interface DfgrowConfig {
   i18n?: I18nConfig;
   cta?: CtaConfig;
   speculation?: SpeculationConfig;
+  security?: SecurityConfig;
   content?: ContentConfig;
   footer?: FooterConfig;
   floatingSidebar?: FloatingSidebarConfig;
