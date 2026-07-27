@@ -67,6 +67,10 @@ const config: DfgrowConfig = {
       { label: 'About', href: '/about' },
     ],
     cta: { label: 'Contact', href: '/contact' },
+    // 顶部菜单次级 CTA 按钮（可选，设置后桌面端主按钮左侧、移动端主按钮上方渲染次级按钮）
+    ctaSecondary: { label: 'Pricing', href: '/pricing' },
+    // 移动端菜单专用次级 CTA（可选，未配置时移动端复用 ctaSecondary）
+    // mobileCtaSecondary: { label: 'Pricing', href: '/pricing' },
     footer: {
       services: [{ label: 'Web Dev', href: '/services#web' }],
       company: [{ label: 'About', href: '/about' }],

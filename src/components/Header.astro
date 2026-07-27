@@ -3,6 +3,8 @@ import { siteConfig, navConfig, i18nConfig, seoConfig } from 'virtual:dfgrow/con
 
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const mobileCta = navConfig.mobileCta ?? navConfig.cta;
+const desktopSecondary = navConfig.ctaSecondary;
+const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
 ---
 
 <header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-ink-100">
@@ -209,6 +211,16 @@ const mobileCta = navConfig.mobileCta ?? navConfig.cta;
     </nav>
 
     <div class="flex items-center gap-3">
+      {desktopSecondary && (
+        <a
+          href={desktopSecondary.href}
+          class="hidden md:inline-flex items-center px-4 py-2 rounded-md bg-white text-brand-700 border border-brand-200 text-sm font-medium no-underline hover:bg-brand-50 transition-colors"
+          data-track="cta_click"
+          data-track-location="header_secondary"
+        >
+          {desktopSecondary.label}
+        </a>
+      )}
       <a
         href={navConfig.cta.href}
         class="hidden md:inline-flex items-center px-4 py-2 rounded-md bg-brand-600 text-white text-sm font-medium no-underline hover:bg-brand-700 transition-colors"
@@ -237,10 +249,56 @@ const mobileCta = navConfig.mobileCta ?? navConfig.cta;
       {navConfig.main.map((item) => {
         const hasChildren = item.children && item.children.length > 0;
         return (
-          <>
+          <div class:list={['mobile-nav-item', hasChildren && 'has-children']} data-expanded="false">
             {hasChildren && (
-              <div class="px-3 pt-2 pb-1 text-xs text-ink-500 font-semibold uppercase tracking-wider">
-                {item.label}
+              <button
+                type="button"
+                class="w-full flex items-center justify-between px-3 py-3 text-base text-ink-800 rounded-md hover:bg-ink-50"
+                aria-expanded="false"
+                data-mobile-submenu-toggle
+              >
+                <span class="font-medium">{item.label}</span>
+                <svg class="w-4 h-4 text-ink-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-mobile-arrow>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
+            {hasChildren && (
+              <div class="mobile-nav-children hidden flex flex-col gap-1 mt-1" data-mobile-children>
+                {item.dropdownHeader && (
+                  <a
+                    href={item.dropdownHeader.href}
+                    class="mx-3 mb-1 px-3 py-2 text-xs text-brand-600 font-medium no-underline rounded-md bg-brand-50 hover:bg-brand-100"
+                  >
+                    {item.dropdownHeader.label}
+                  </a>
+                )}
+                {item.children!.map((child) => (
+                  <>
+                    {child.separatorBefore && (
+                      <div class="my-1.5 mx-3 border-t border-ink-100" />
+                    )}
+                    <a
+                      href={child.href}
+                      class="px-3 py-2.5 text-sm text-ink-600 no-underline rounded-md hover:bg-ink-50 flex items-center gap-2"
+                      style="padding-left: 2rem;"
+                    >
+                      <span>{child.label}</span>
+                      {child.badge && (
+                        <span class:list={[
+                          'text-[10px] px-1.5 py-0.5 rounded font-bold leading-none',
+                          child.badgeStyle === 'hot'
+                            ? 'bg-red-500 text-white'
+                            : child.badgeStyle === 'new'
+                              ? 'bg-green-500 text-white'
+                              : 'bg-ink-100 text-ink-600',
+                        ]}>
+                          {child.badge}
+                        </span>
+                      )}
+                    </a>
+                  </>
+                ))}
               </div>
             )}
             {!hasChildren && (
@@ -251,45 +309,17 @@ const mobileCta = navConfig.mobileCta ?? navConfig.cta;
                 {item.label}
               </a>
             )}
-
-            {hasChildren && item.dropdownHeader && (
-              <a
-                href={item.dropdownHeader.href}
-                class="mx-3 mb-1 px-3 py-2 text-xs text-brand-600 font-medium no-underline rounded-md bg-brand-50 hover:bg-brand-100"
-              >
-                {item.dropdownHeader.label}
-              </a>
-            )}
-
-            {hasChildren && item.children!.map((child) => (
-              <>
-                {child.separatorBefore && (
-                  <div class="my-1.5 mx-3 border-t border-ink-100" />
-                )}
-                <a
-                  href={child.href}
-                  class="px-3 py-2.5 text-sm text-ink-600 no-underline rounded-md hover:bg-ink-50 flex items-center gap-2"
-                  style="padding-left: 2rem;"
-                >
-                  <span>{child.label}</span>
-                  {child.badge && (
-                    <span class:list={[
-                      'text-[10px] px-1.5 py-0.5 rounded font-bold leading-none',
-                      child.badgeStyle === 'hot'
-                        ? 'bg-red-500 text-white'
-                        : child.badgeStyle === 'new'
-                          ? 'bg-green-500 text-white'
-                          : 'bg-ink-100 text-ink-600',
-                    ]}>
-                      {child.badge}
-                    </span>
-                  )}
-                </a>
-              </>
-            ))}
-          </>
+          </div>
         );
       })}
+      {mobileSecondary && (
+        <a
+          href={mobileSecondary.href}
+          class="mt-2 px-3 py-3 text-base text-brand-700 bg-white border border-brand-200 rounded-md text-center no-underline"
+        >
+          {mobileSecondary.label}
+        </a>
+      )}
       <a
         href={mobileCta.href}
         class="mt-2 px-3 py-3 text-base text-white bg-brand-600 rounded-md text-center no-underline"
@@ -336,5 +366,29 @@ const mobileCta = navConfig.mobileCta ?? navConfig.cta;
         closeMenu();
       }
     }
+  });
+
+  // ── 移动端子菜单手风柄展开/收起 ──
+  const submenuToggles = menu?.querySelectorAll('[data-mobile-submenu-toggle]');
+  submenuToggles?.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const wrapper = btn.parentElement as HTMLElement | null;
+      if (!wrapper) return;
+      const children = wrapper.querySelector('[data-mobile-children]') as HTMLElement | null;
+      const arrow = btn.querySelector('[data-mobile-arrow]') as SVGElement | null;
+      const isOpen = wrapper.getAttribute('data-expanded') === 'true';
+
+      if (isOpen) {
+        children?.classList.add('hidden');
+        wrapper.setAttribute('data-expanded', 'false');
+        btn.setAttribute('aria-expanded', 'false');
+        if (arrow) arrow.style.transform = '';
+      } else {
+        children?.classList.remove('hidden');
+        wrapper.setAttribute('data-expanded', 'true');
+        btn.setAttribute('aria-expanded', 'true');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      }
+    });
   });
 </script>

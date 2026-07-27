@@ -99,8 +99,19 @@ export interface SiteConfig {
 export interface NavConfig {
   main: NavItem[];
   cta: NavItem;
+  /**
+   * 顶部菜单次级 CTA 按钮（可选）。
+   * 设置后在桌面端主 CTA 左侧、移动端菜单主 CTA 上方渲染一个次级样式按钮。
+   * 未配置时仅显示主 CTA，行为与原版一致。
+   */
+  ctaSecondary?: NavItem;
   /** 移动端菜单专用 CTA（不设置则复用 cta） */
   mobileCta?: NavItem;
+  /**
+   * 移动端菜单专用次级 CTA（可选）。
+   * 不设置时移动端复用 ctaSecondary（若 ctaSecondary 也未配置则不渲染次级按钮）。
+   */
+  mobileCtaSecondary?: NavItem;
   footer: {
     services: NavItem[];
     company: NavItem[];
