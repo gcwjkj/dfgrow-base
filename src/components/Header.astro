@@ -19,17 +19,19 @@ const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
         const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
         const hasChildren = item.children && item.children.length > 0;
         const isGrid = item.dropdownLayout === 'grid';
+        // 有子菜单时，配置了 href 才支持点击跳转，否则仅作为下拉触发器
+        const dropdownOnly = hasChildren && !item.href;
         return (
           <div class:list={['relative group', hasChildren && 'nav-dropdown']}>
             <a
-              href={hasChildren ? '#' : item.href}
+              href={dropdownOnly ? '#' : item.href}
               class:list={[
                 'px-3 py-2 text-sm no-underline rounded-md transition-colors inline-flex items-center gap-1',
                 isActive
                   ? 'text-brand-700 bg-brand-50'
                   : 'text-ink-700 hover:text-brand-700 hover:bg-ink-50',
               ]}
-              onClick={hasChildren ? 'event.preventDefault()' : undefined}
+              onclick={dropdownOnly ? 'event.preventDefault()' : undefined}
             >
               {item.label}
               {hasChildren && (
@@ -248,20 +250,41 @@ const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
     <nav class="container-page py-4 flex flex-col gap-1" aria-label={i18nConfig.mobileNav}>
       {navConfig.main.map((item) => {
         const hasChildren = item.children && item.children.length > 0;
+        // 有子菜单时，配置了 href 才支持点击跳转，否则仅作为展开/折叠触发器
+        const dropdownOnly = hasChildren && !item.href;
         return (
           <div class:list={['mobile-nav-item', hasChildren && 'has-children']} data-expanded="false">
             {hasChildren && (
-              <button
-                type="button"
-                class="w-full flex items-center justify-between px-3 py-3 text-base text-ink-800 rounded-md hover:bg-ink-50"
-                aria-expanded="false"
-                data-mobile-submenu-toggle
-              >
-                <span class="font-medium">{item.label}</span>
-                <svg class="w-4 h-4 text-ink-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-mobile-arrow>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+              <div class="w-full flex items-stretch px-3 rounded-md hover:bg-ink-50">
+                {dropdownOnly ? (
+                  <button
+                    type="button"
+                    class="flex-1 flex items-center py-3 text-base text-ink-800 text-left"
+                    aria-expanded="false"
+                    data-mobile-submenu-toggle
+                  >
+                    <span class="font-medium">{item.label}</span>
+                  </button>
+                ) : (
+                  <a
+                    href={item.href}
+                    class="flex-1 flex items-center py-3 text-base text-ink-800 no-underline"
+                  >
+                    <span class="font-medium">{item.label}</span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  class="flex items-center pl-2 text-ink-400"
+                  aria-label="展开子菜单"
+                  aria-expanded="false"
+                  data-mobile-submenu-toggle
+                >
+                  <svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-mobile-arrow>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
             )}
             {hasChildren && (
               <div class="mobile-nav-children hidden flex flex-col gap-1 mt-1" data-mobile-children>
@@ -371,22 +394,25 @@ const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
   // ── 移动端子菜单手风柄展开/收起 ──
   const submenuToggles = menu?.querySelectorAll('[data-mobile-submenu-toggle]');
   submenuToggles?.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const wrapper = btn.parentElement as HTMLElement | null;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // 向上查找最近的 .mobile-nav-item 容器
+      const wrapper = (btn.closest('.mobile-nav-item') as HTMLElement | null);
       if (!wrapper) return;
       const children = wrapper.querySelector('[data-mobile-children]') as HTMLElement | null;
-      const arrow = btn.querySelector('[data-mobile-arrow]') as SVGElement | null;
+      const arrow = wrapper.querySelector('[data-mobile-arrow]') as SVGElement | null;
+      const toggles = wrapper.querySelectorAll('[data-mobile-submenu-toggle]');
       const isOpen = wrapper.getAttribute('data-expanded') === 'true';
 
       if (isOpen) {
         children?.classList.add('hidden');
         wrapper.setAttribute('data-expanded', 'false');
-        btn.setAttribute('aria-expanded', 'false');
+        toggles.forEach((t) => t.setAttribute('aria-expanded', 'false'));
         if (arrow) arrow.style.transform = '';
       } else {
         children?.classList.remove('hidden');
         wrapper.setAttribute('data-expanded', 'true');
-        btn.setAttribute('aria-expanded', 'true');
+        toggles.forEach((t) => t.setAttribute('aria-expanded', 'true'));
         if (arrow) arrow.style.transform = 'rotate(180deg)';
       }
     });
