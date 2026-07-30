@@ -180,6 +180,15 @@ export interface CtaConfig {
   secondaryLabel?: string;
   secondaryHref?: string;
   note?: string;
+  /**
+   * 主 CTA 按钮外链行为。
+   * - 未设置（undefined）：自动判断 —— href 以 http:// 或 https:// 开头时视为外链，新标签页打开
+   * - `true`：强制新标签页打开（即使 href 是相对路径）
+   * - `false`：强制当前页跳转（即使是绝对 URL）
+   */
+  primaryExternal?: boolean;
+  /** 次 CTA 按钮外链行为，规则同 primaryExternal */
+  secondaryExternal?: boolean;
 }
 
 export interface SpeculationConfig {

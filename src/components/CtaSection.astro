@@ -12,6 +12,10 @@ interface Props {
   secondaryHref?: string;
   note?: string;
   location?: string;
+  /** 主 CTA 外链行为覆盖，规则同 CtaConfig.primaryExternal */
+  primaryExternal?: boolean;
+  /** 次 CTA 外链行为覆盖，规则同 CtaConfig.secondaryExternal */
+  secondaryExternal?: boolean;
 }
 
 const {
@@ -23,6 +27,8 @@ const {
   secondaryHref = ctaConfig.secondaryHref,
   note = ctaConfig.note,
   location = 'cta_section',
+  primaryExternal = ctaConfig.primaryExternal,
+  secondaryExternal = ctaConfig.secondaryExternal,
 } = Astro.props;
 ---
 
@@ -33,11 +39,11 @@ const {
     </h2>
     <p class="mt-2 mb-4 text-base leading-relaxed text-ink-700">{description}</p>
     <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-      <Button href={primaryHref} size="lg" trackEvent="cta_click" trackLocation={location} data-delight>
+      <Button href={primaryHref} size="lg" external={primaryExternal} trackEvent="cta_click" trackLocation={location} data-delight>
         {primaryLabel}
       </Button>
       {secondaryLabel && secondaryHref && (
-        <Button href={secondaryHref} size="lg" variant="secondary" trackEvent="cta_click" trackLocation={`${location}_secondary`}>
+        <Button href={secondaryHref} size="lg" variant="secondary" external={secondaryExternal} trackEvent="cta_click" trackLocation={`${location}_secondary`}>
           {secondaryLabel}
         </Button>
       )}

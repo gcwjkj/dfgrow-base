@@ -5,6 +5,21 @@ const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const mobileCta = navConfig.mobileCta ?? navConfig.cta;
 const desktopSecondary = navConfig.ctaSecondary;
 const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
+
+// 判断导航项是否作为外链在新标签页打开（与 Footer 逻辑一致）
+function isExternalLink(item: { href?: string; external?: boolean }): boolean {
+  if (item.external === true) return true;
+  if (item.external === false) return false;
+  return /^https?:\/\//i.test(item.href ?? '');
+}
+const ctaExt = isExternalLink(navConfig.cta);
+const ctaAttrs = ctaExt ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+const desktopSecondaryExt = desktopSecondary ? isExternalLink(desktopSecondary) : false;
+const desktopSecondaryAttrs = desktopSecondaryExt ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+const mobileCtaExt = isExternalLink(mobileCta);
+const mobileCtaAttrs = mobileCtaExt ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+const mobileSecondaryExt = mobileSecondary ? isExternalLink(mobileSecondary) : false;
+const mobileSecondaryAttrs = mobileSecondaryExt ? { target: '_blank', rel: 'noopener noreferrer' } : {};
 ---
 
 <header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-ink-100">
@@ -219,15 +234,17 @@ const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
           class="hidden md:inline-flex items-center px-4 py-2 rounded-md bg-white text-brand-700 border border-brand-200 text-sm font-medium no-underline hover:bg-brand-50 transition-colors"
           data-track="cta_click"
           data-track-location="header_secondary"
+          {...desktopSecondaryAttrs}
         >
           {desktopSecondary.label}
         </a>
       )}
       <a
         href={navConfig.cta.href}
-        class="hidden md:inline-flex items-center px-4 py-2 rounded-md bg-brand-600 text-white text-sm font-medium no-underline hover:bg-brand-700 transition-colors"
+        class="hidden md:inline-flex items-center px-4 py-2 rounded-md bg-brand-600 text-white text-sm font-medium no-underline hover:bg-brand-700 hover:text-white transition-colors"
         data-track="cta_click"
         data-track-location="header"
+        {...ctaAttrs}
       >
         {navConfig.cta.label}
       </a>
@@ -339,6 +356,7 @@ const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
         <a
           href={mobileSecondary.href}
           class="mt-2 px-3 py-3 text-base text-brand-700 bg-white border border-brand-200 rounded-md text-center no-underline"
+          {...mobileSecondaryAttrs}
         >
           {mobileSecondary.label}
         </a>
@@ -346,6 +364,7 @@ const mobileSecondary = navConfig.mobileCtaSecondary ?? navConfig.ctaSecondary;
       <a
         href={mobileCta.href}
         class="mt-2 px-3 py-3 text-base text-white bg-brand-600 rounded-md text-center no-underline"
+        {...mobileCtaAttrs}
       >
         {mobileCta.label}
       </a>
